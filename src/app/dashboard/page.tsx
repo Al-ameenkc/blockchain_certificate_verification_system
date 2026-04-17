@@ -145,22 +145,27 @@ export default function Dashboard() {
     const certRef = `MIU-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (typeof window !== 'undefined' && (window as any).ethereum) {
         // Request account access if needed
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
         
         // Ensure network is Sepolia Testnet (chainId: 0xaa36a7)
         try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (window as any).ethereum.request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: '0xaa36a7' }],
           });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (switchError: any) {
           console.error("Failed to switch to Sepolia Testnet", switchError);
           showAlert("Network Error", "Please switch your MetaMask network to the Sepolia Testnet.", "error");
           return;
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const provider = new ethers.BrowserProvider((window as any).ethereum);
         const signer = await provider.getSigner();
 
@@ -197,6 +202,7 @@ export default function Dashboard() {
 
           showLoading(false);
           showAlert("Transaction Successful", "Certificate has been cryptographically anchored to the blockchain and synced to the database.", "success");
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch(contractErr: any) {
           showLoading(false);
           console.error("Contract write rejected or failed.", contractErr);
@@ -211,6 +217,7 @@ export default function Dashboard() {
         showAlert("Wallet Missing", "MetaMask (or a compatible Web3 wallet) is required to issue certificates on the Ethereum network! Please install it.", "error");
         return;
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch(err: any) {
       console.error("Ethereum Wallet Connection Failed:", err);
       if (err.code === 4001) {

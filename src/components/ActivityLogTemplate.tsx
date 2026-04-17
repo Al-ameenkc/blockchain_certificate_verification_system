@@ -102,7 +102,7 @@ export default function ActivityLogTemplate({ title, subtitle, baseFilter, showT
               {title.toLowerCase()}.
             </h1>
             <p className="text-cyan-400/80 font-bold tracking-[0.2em] uppercase text-xs">
-              // {subtitle}
+              {"// "}{subtitle}
             </p>
           </motion.div>
           

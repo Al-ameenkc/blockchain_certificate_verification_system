@@ -14,6 +14,7 @@ export default function NodeSettings() {
     if (typeof window !== 'undefined') {
         const savedRpc = localStorage.getItem('rpc_url');
         const savedAddr = localStorage.getItem('contract_address');
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (savedRpc) setRpcUrl(savedRpc);
         if (savedAddr) setContractAddress(savedAddr);
     }
@@ -51,7 +52,7 @@ export default function NodeSettings() {
               node config.
             </h1>
             <p className="text-cyan-400/80 font-bold tracking-[0.2em] uppercase text-xs">
-              // define ethereum routing endpoints
+              {"// define ethereum routing endpoints"}
             </p>
           </motion.div>
           

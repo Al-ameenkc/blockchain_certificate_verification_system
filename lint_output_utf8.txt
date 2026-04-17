@@ -1,0 +1,54 @@
+﻿
+C:\Users\ASUS\Desktop\Projects\CVSUB_Abisina\blockchain-certificate-verification\scripts\deploy.ts
+  1:13  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\ASUS\Desktop\Projects\CVSUB_Abisina\blockchain-certificate-verification\src\app\certificate\[ref]\page.tsx
+  158:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\ASUS\Desktop\Projects\CVSUB_Abisina\blockchain-certificate-verification\src\app\dashboard\page.tsx
+  148:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  150:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  154:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  158:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  164:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  200:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  214:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\ASUS\Desktop\Projects\CVSUB_Abisina\blockchain-certificate-verification\src\app\dashboard\settings\page.tsx
+  17:23  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\ASUS\Desktop\Projects\CVSUB_Abisina\blockchain-certificate-verification\src\app\dashboard\settings\page.tsx:17:23
+  15 |         const savedRpc = localStorage.getItem('rpc_url');
+  16 |         const savedAddr = localStorage.getItem('contract_address');
+> 17 |         if (savedRpc) setRpcUrl(savedRpc);
+     |                       ^^^^^^^^^ Avoid calling setState() directly within an effect
+  18 |         if (savedAddr) setContractAddress(savedAddr);
+  19 |     }
+  20 |   }, []);  react-hooks/set-state-in-effect
+  53:90  error  Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react/jsx-no-comment-textnodes
+
+C:\Users\ASUS\Desktop\Projects\CVSUB_Abisina\blockchain-certificate-verification\src\app\verify\[ref]\page.tsx
+  14:44  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  51:16  warning  'err' is defined but never used           @typescript-eslint/no-unused-vars
+
+C:\Users\ASUS\Desktop\Projects\CVSUB_Abisina\blockchain-certificate-verification\src\components\ActivityLogTemplate.tsx
+  104:90  error  Comments inside children section of tag should be placed inside braces  react/jsx-no-comment-textnodes
+
+C:\Users\ASUS\Desktop\Projects\CVSUB_Abisina\blockchain-certificate-verification\typechain-types\factories\CertificateRegistry__factory.ts
+  3:1  warning  Unused eslint-disable directive (no problems were reported)
+
+C:\Users\ASUS\Desktop\Projects\CVSUB_Abisina\blockchain-certificate-verification\typechain-types\factories\index.ts
+  3:1  warning  Unused eslint-disable directive (no problems were reported)
+
+C:\Users\ASUS\Desktop\Projects\CVSUB_Abisina\blockchain-certificate-verification\typechain-types\index.ts
+  3:1  warning  Unused eslint-disable directive (no problems were reported)
+
+Γ£û 17 problems (12 errors, 5 warnings)
+  0 errors and 3 warnings potentially fixable with the `--fix` option.
+

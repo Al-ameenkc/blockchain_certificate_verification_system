@@ -11,6 +11,7 @@ export default function VerifyCertificate() {
   const router = useRouter();
   const ref = params.ref as string;
   const [status, setStatus] = useState<'loading' | 'verified' | 'failed'>('loading');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [certData, setCertData] = useState<any>(null);
 
   useEffect(() => {
@@ -48,7 +49,7 @@ export default function VerifyCertificate() {
           };
           isVerifiedOnChain = true;
         }
-      } catch (err) {
+      } catch {
         console.warn("Blockchain verification failed or contract not found. Falling back to Supabase database...");
       }
 

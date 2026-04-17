@@ -48,10 +48,10 @@ const FuturisticDropdown = ({
   return (
     <div className="relative">
       <motion.div 
-        whileTap={{ scale: 0.98 }}
+        whileTap={{ scale: 0.95 }}
         className={cn(
-          "group relative w-full bg-[#0A0A0A]/80 backdrop-blur-md border rounded-xl px-5 py-4 cursor-pointer transition-all flex justify-between items-center overflow-hidden",
-          isOpen ? "border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.15)]" : "border-white/10 hover:border-purple-500/50"
+          "group relative w-full bg-[#020202]/80 backdrop-blur-xl border-2 rounded-2xl px-6 py-5 cursor-pointer transition-all flex justify-between items-center overflow-hidden",
+          isOpen ? "border-cyan-400 shadow-[0_0_30px_rgba(34,211,238,0.2)]" : "border-white/10 hover:border-cyan-400/50 hover:bg-white/5"
         )}
         onClick={() => setOpen(!isOpen)}
       >
@@ -59,58 +59,59 @@ const FuturisticDropdown = ({
           <motion.span 
             initial={false}
             animate={{ 
-              y: value ? 0 : 10, 
-              scale: value ? 1 : 1.1,
+              y: value ? 0 : 12, 
+              scale: value ? 1 : 1.15,
               opacity: value ? 0.6 : 0 
             }}
-            className="text-[10px] uppercase tracking-widest text-purple-400 font-bold mb-1 origin-left"
+            className="text-[10px] uppercase tracking-[0.2em] text-cyan-400 font-black mb-1 origin-left"
           >
             {label}
           </motion.span>
           <span className={cn(
-            "font-semibold transition-all duration-300",
-            value ? "text-white text-lg" : "text-gray-500 text-lg translate-y-[-10px]"
+            "font-black tracking-tight transition-all duration-300",
+            value ? "text-white text-xl" : "text-gray-500 text-xl translate-y-[-10px]"
           )}>
-            {value || `Select ${label}`}
+            {value ? value.toLowerCase() : `select ${label.toLowerCase()}`}
           </span>
         </div>
         <motion.div 
           animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
           className={cn(
-            "relative z-10 w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
-            isOpen ? "bg-purple-500/20 text-purple-400" : "bg-white/5 text-gray-400 group-hover:bg-white/10 group-hover:text-white"
+            "relative z-10 w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
+            isOpen ? "bg-cyan-400/20 text-cyan-400" : "bg-white/5 text-gray-400 group-hover:bg-cyan-400/10 group-hover:text-cyan-400"
           )}
         >
-          <ChevronDown className="w-4 h-4" strokeWidth={3} />
+          <ChevronDown className="w-5 h-5" strokeWidth={3} />
         </motion.div>
       </motion.div>
       
       <AnimatePresence>
         {isOpen && (
           <motion.div 
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            initial={{ opacity: 0, y: 10, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute z-50 w-full mt-2 bg-[#0A0A0A]/95 backdrop-blur-xl border border-purple-500/30 rounded-xl overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
+            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="absolute z-50 w-full mt-3 bg-[#0A0A0A]/95 backdrop-blur-2xl border-2 border-cyan-400/30 rounded-2xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.8)]"
           >
-            <div className="max-h-60 overflow-y-auto custom-scrollbar">
+            <div className="max-h-64 overflow-y-auto custom-scrollbar p-2">
               {options.map((opt) => (
                 <div 
                   key={opt} 
-                  className="group relative px-5 py-3 hover:bg-purple-600/20 cursor-pointer text-gray-300 transition-colors border-b border-white/5 last:border-0 flex items-center space-x-3"
+                  className="group relative px-4 py-3 hover:bg-cyan-400/10 rounded-xl cursor-pointer text-gray-300 transition-colors flex items-center space-x-3 mb-1 last:mb-0"
                   onClick={() => {
                     onChange(opt);
                     setOpen(false);
                   }}
                 >
                   <div className={cn(
-                    "w-1.5 h-1.5 rounded-full transition-all duration-300",
-                    value === opt ? "bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,1)]" : "bg-white/10 group-hover:bg-purple-400/50"
+                    "w-2 h-2 rounded-full transition-all duration-300",
+                    value === opt ? "bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,1)]" : "bg-white/10 group-hover:bg-cyan-400/50 group-hover:scale-150"
                   )} />
                   <span className={cn(
-                    "transition-colors text-base font-medium",
-                    value === opt ? "text-white" : "group-hover:text-white"
+                    "transition-colors text-lg font-bold tracking-tight lowercase",
+                    value === opt ? "text-cyan-100" : "group-hover:text-white"
                   )}>{opt}</span>
                 </div>
               ))}
@@ -199,35 +200,42 @@ export default function Dashboard() {
 
 
   return (
-    <div className="min-h-screen bg-[#020202] text-gray-200 flex font-sans selection:bg-purple-500/30">
+    <div className="min-h-screen bg-[#020202] text-gray-200 flex font-sans selection:bg-cyan-500/30 overflow-hidden relative">
       <Sidebar />
 
-      <main className="flex-1 p-12 overflow-y-auto relative">
-        {/* Subtle background glow */}
-        <div className="fixed top-0 left-1/4 w-[800px] h-[800px] bg-purple-900/10 rounded-full blur-[120px] pointer-events-none -z-10 mix-blend-screen" />
+      {/* Cyber Orbs */}
+      <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-cyan-600/10 rounded-full blur-[150px] pointer-events-none -z-10 mix-blend-screen" />
+      <div className="fixed bottom-[-20%] left-[20%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[150px] pointer-events-none -z-10 mix-blend-screen" />
+
+      <main className="flex-1 p-12 overflow-y-auto relative z-10">
         
-        <header className="flex justify-between items-start mb-16">
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-            <h1 className="text-4xl font-black text-white tracking-tighter mb-2">
-              {view === 'selection' ? 'Management Console' : view === 'issue' ? 'Issue New Certificate' : 'Register Legacy Certificate'}
+        <header className="flex justify-between items-start mb-20 mt-4">
+          <motion.div 
+            initial={{ opacity: 0, x: -30, filter: "blur(10px)" }} 
+            animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
+          >
+            <h1 className="text-[3.5rem] font-black text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-gray-500 tracking-tighter leading-none mb-4 lowercase">
+              {view === 'selection' ? 'management console.' : view === 'issue' ? 'issue new cert.' : 'register legacy cert.'}
             </h1>
-            <p className="text-purple-400/60 font-medium tracking-wide">
+            <p className="text-cyan-400/80 font-bold tracking-[0.2em] uppercase text-xs">
               {view === 'selection' 
-                ? 'Select an operation to begin anchoring data' 
-                : 'Complete the fields below to commit to the Ethereum Ledger'}
+                ? '// select an operation to anchor data' 
+                : '// complete fields below to commit to ledger'}
             </p>
           </motion.div>
           
           <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }} 
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-[#0A0A0A]/80 backdrop-blur-xl border border-white/5 rounded-2xl px-5 py-3 flex items-center space-x-3 shadow-lg"
+            initial={{ opacity: 0, scale: 0.5, rotate: -10 }} 
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            transition={{ type: "spring", bounce: 0.6 }}
+            className="bg-[#0A0A0A]/80 backdrop-blur-xl border-2 border-white/5 rounded-full px-6 py-4 flex items-center space-x-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
           >
-            <div className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            <div className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500 shadow-[0_0_10px_rgba(34,211,238,1)]"></span>
             </div>
-            <span className="text-xs font-bold text-gray-300 uppercase tracking-widest">Node: Active</span>
+            <span className="text-xs font-black text-gray-300 uppercase tracking-widest">Node: Active</span>
           </motion.div>
         </header>
 
@@ -235,84 +243,88 @@ export default function Dashboard() {
           {view === 'selection' ? (
             <motion.div 
               key="selection"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-10"
+              initial={{ opacity: 0, y: 40, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -40, scale: 0.95 }}
+              transition={{ type: "spring", bounce: 0.4, duration: 0.6 }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto mt-10"
             >
               <motion.button 
-                whileHover={{ scale: 1.02, y: -5 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.03, y: -10 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => setView('issue')}
-                className="group relative bg-[#0A0A0A]/50 backdrop-blur-xl border border-white/5 p-8 rounded-[2rem] text-left transition-all hover:border-purple-500/50 hover:bg-[#111]/80 hover:shadow-[0_20px_40px_rgba(168,85,247,0.1)] overflow-hidden"
+                className="group relative bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-2xl border-2 border-white/10 p-10 rounded-[3rem] text-left transition-all hover:border-cyan-400/50 hover:shadow-[0_30px_60px_rgba(34,211,238,0.15)] overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 via-purple-600/0 to-purple-600/5 group-hover:to-purple-600/20 transition-all duration-500" />
-                <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-purple-400 mb-6 group-hover:bg-purple-600 group-hover:text-white group-hover:border-purple-500 transition-all duration-300 shadow-xl">
-                  <Sparkles className="w-7 h-7" />
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/0 via-cyan-400/0 to-cyan-400/10 group-hover:to-cyan-400/20 transition-all duration-700" />
+                <div className="w-20 h-20 bg-white/5 border-2 border-white/10 rounded-[1.5rem] flex items-center justify-center text-cyan-400 mb-8 group-hover:bg-cyan-400 group-hover:text-black group-hover:border-cyan-300 transition-all duration-500 shadow-2xl group-hover:rotate-12 group-hover:scale-110">
+                  <Sparkles className="w-10 h-10" />
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">Issue Certificate</h3>
-                <p className="text-gray-400 leading-relaxed font-medium">Generate and cryptographically anchor a brand new digital certificate for current graduates onto the Sepolia testnet.</p>
+                <h3 className="text-4xl font-black text-white mb-4 tracking-tighter lowercase">issue.</h3>
+                <p className="text-gray-400 text-lg leading-relaxed font-medium">generate and cryptographically anchor a brand new digital certificate for current graduates onto the sepolia testnet.</p>
               </motion.button>
 
               <motion.button 
-                whileHover={{ scale: 1.02, y: -5 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.03, y: -10 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => setView('register')}
-                className="group relative bg-[#0A0A0A]/50 backdrop-blur-xl border border-white/5 p-8 rounded-[2rem] text-left transition-all hover:border-blue-500/50 hover:bg-[#111]/80 hover:shadow-[0_20px_40px_rgba(59,130,246,0.1)] overflow-hidden"
+                className="group relative bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur-2xl border-2 border-white/10 p-10 rounded-[3rem] text-left transition-all hover:border-purple-500/50 hover:shadow-[0_30px_60px_rgba(168,85,247,0.15)] overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/0 via-blue-600/0 to-blue-600/5 group-hover:to-blue-600/20 transition-all duration-500" />
-                <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-blue-400 mb-6 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-500 transition-all duration-300 shadow-xl">
-                  <ScrollText className="w-7 h-7" />
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 via-purple-500/0 to-purple-500/10 group-hover:to-purple-500/20 transition-all duration-700" />
+                <div className="w-20 h-20 bg-white/5 border-2 border-white/10 rounded-[1.5rem] flex items-center justify-center text-purple-400 mb-8 group-hover:bg-purple-500 group-hover:text-white group-hover:border-purple-400 transition-all duration-500 shadow-2xl group-hover:-rotate-12 group-hover:scale-110">
+                  <ScrollText className="w-10 h-10" />
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">Register Certificate</h3>
-                <p className="text-gray-400 leading-relaxed font-medium">Back-log and verify existing paper certificates issued in previous years to establish historical provenance.</p>
+                <h3 className="text-4xl font-black text-white mb-4 tracking-tighter lowercase">register.</h3>
+                <p className="text-gray-400 text-lg leading-relaxed font-medium">back-log and verify existing paper certificates issued in previous years to establish historical provenance.</p>
               </motion.button>
             </motion.div>
           ) : (
             <motion.div 
               key="form"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="max-w-3xl"
+              initial={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
+              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+              exit={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
+              transition={{ type: "spring", bounce: 0.3 }}
+              className="max-w-4xl mx-auto"
             >
-              <button 
+              <motion.button 
+                whileHover={{ x: -5 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setView('selection')}
-                className="mb-8 text-xs font-bold text-purple-400 hover:text-white transition-colors flex items-center space-x-2 bg-purple-500/10 hover:bg-purple-500/20 px-4 py-2 rounded-full"
+                className="mb-8 text-xs font-black text-cyan-400 hover:text-white transition-colors flex items-center space-x-3 bg-cyan-500/10 hover:bg-cyan-500/20 px-6 py-3 rounded-full"
               >
-                <ArrowLeft className="w-4 h-4" /> 
-                <span className="tracking-widest uppercase">Back to Selection</span>
-              </button>
+                <ArrowLeft className="w-5 h-5" /> 
+                <span className="tracking-[0.2em] uppercase">Back</span>
+              </motion.button>
 
-              <div className="bg-[#0A0A0A]/80 backdrop-blur-xl rounded-[2rem] border border-white/10 p-10 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500" />
+              <div className="bg-[#0A0A0A]/60 backdrop-blur-3xl rounded-[3rem] border-2 border-white/5 p-12 shadow-[0_30px_100px_rgba(0,0,0,0.8)] relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-cyan-400 via-indigo-500 to-purple-500" />
                 
-                <form onSubmit={handleCommit} className="space-y-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
+                <form onSubmit={handleCommit} className="space-y-10">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-10">
                     
-                    <div className="space-y-2 md:col-span-2 group">
-                      <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1 group-focus-within:text-purple-400 transition-colors">Full Name of Graduate</label>
+                    <div className="space-y-3 md:col-span-2 group">
+                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-2 group-focus-within:text-cyan-400 transition-colors">Full Name</label>
                       <input 
                         type="text"
-                        placeholder="E.g. Sulaiman Muhammad Goni"
-                        className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl focus:border-purple-500 focus:bg-white/10 outline-none text-white transition-all text-lg font-medium placeholder-gray-600 shadow-inner"
+                        placeholder="e.g. sulaiman muhammad goni"
+                        className="w-full px-6 py-5 bg-[#020202]/80 border-2 border-white/10 rounded-2xl focus:border-cyan-400 focus:bg-white/5 outline-none text-white transition-all text-xl font-black tracking-tight placeholder-gray-700 shadow-inner lowercase"
                         onChange={(e) => setFormData({...formData, studentName: e.target.value})}
                         required
                       />
                     </div>
 
-                    <div className="space-y-2 group">
-                      <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1 group-focus-within:text-purple-400 transition-colors">Matriculation Number</label>
+                    <div className="space-y-3 group">
+                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-2 group-focus-within:text-cyan-400 transition-colors">Matric Number</label>
                       <input 
                         type="text"
-                        placeholder="E.g. MIUSTD2021232"
-                        className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl focus:border-purple-500 focus:bg-white/10 outline-none text-white transition-all text-lg font-medium placeholder-gray-600 shadow-inner"
+                        placeholder="e.g. miustd2021232"
+                        className="w-full px-6 py-5 bg-[#020202]/80 border-2 border-white/10 rounded-2xl focus:border-cyan-400 focus:bg-white/5 outline-none text-white transition-all text-xl font-black tracking-tight placeholder-gray-700 shadow-inner lowercase"
                         onChange={(e) => setFormData({...formData, matricNumber: e.target.value})}
                         required
                       />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <FuturisticDropdown 
                         label="Class of Degree"
                         value={formData.classOfDegree}
@@ -323,7 +335,7 @@ export default function Dashboard() {
                       />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <FuturisticDropdown 
                         label="Department"
                         value={formData.department}
@@ -334,11 +346,11 @@ export default function Dashboard() {
                       />
                     </div>
 
-                    <div className="space-y-2 group">
-                      <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1 group-focus-within:text-purple-400 transition-colors">Date of Issuance</label>
+                    <div className="space-y-3 group">
+                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-2 group-focus-within:text-cyan-400 transition-colors">Date Issued</label>
                       <input 
                         type="date"
-                        className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl focus:border-purple-500 focus:bg-white/10 outline-none text-white transition-all text-lg font-medium shadow-inner"
+                        className="w-full px-6 py-5 bg-[#020202]/80 border-2 border-white/10 rounded-2xl focus:border-cyan-400 focus:bg-white/5 outline-none text-white transition-all text-xl font-black tracking-tight shadow-inner"
                         style={{ colorScheme: 'dark' }}
                         value={formData.date}
                         onChange={(e) => setFormData({...formData, date: e.target.value})}
@@ -349,16 +361,16 @@ export default function Dashboard() {
 
                   <div className="pt-8">
                     <motion.button 
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.98 }}
+                      whileHover={{ scale: 1.02, y: -5 }}
+                      whileTap={{ scale: 0.95 }}
                       type="submit"
-                      className="group relative w-full py-5 bg-white text-black rounded-xl font-black text-lg hover:bg-gray-200 transition-all flex items-center justify-center space-x-3 overflow-hidden"
+                      className="group relative w-full py-6 bg-gradient-to-r from-cyan-400 to-blue-500 text-black rounded-2xl font-black text-2xl hover:brightness-110 transition-all flex items-center justify-center space-x-4 overflow-hidden shadow-[0_15px_30px_rgba(34,211,238,0.3)] lowercase tracking-tight"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-400/0 via-purple-400/20 to-purple-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                      <CheckCircle2 className="w-6 h-6 text-purple-600" />
-                      <span>{view === 'issue' ? 'Issue to Blockchain' : 'Anchor to Blockchain'}</span>
+                      <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
+                      <CheckCircle2 className="w-8 h-8 text-black" strokeWidth={3} />
+                      <span>{view === 'issue' ? 'anchor to chain.' : 'register legacy.'}</span>
                     </motion.button>
-                    <p className="text-center text-[10px] text-gray-600 uppercase tracking-widest mt-4">Transaction will be signed via MetaMask</p>
+                    <p className="text-center text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mt-6">tx signed via metamask</p>
                   </div>
                 </form>
               </div>

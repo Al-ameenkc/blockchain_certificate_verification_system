@@ -10,45 +10,56 @@ export default function Sidebar() {
 
   const menuItems = [
     { name: 'Home', href: '/dashboard', icon: Home },
-    { name: 'Certificate Records', href: '/dashboard/record', icon: LayoutList },
-    { name: 'Issued Certificates', href: '/dashboard/issued', icon: Award },
-    { name: 'Registered Certificates', href: '/dashboard/registered', icon: ScrollText },
-    { name: 'Node Settings', href: '/dashboard/settings', icon: Settings },
+    { name: 'Records', href: '/dashboard/record', icon: LayoutList },
+    { name: 'Issued', href: '/dashboard/issued', icon: Award },
+    { name: 'Registered', href: '/dashboard/registered', icon: ScrollText },
+    { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
 
   return (
-    <aside className="w-72 bg-[#050505]/80 backdrop-blur-3xl border-r border-white/5 flex flex-col p-6 z-50">
-      <div className="mb-10 px-4 pt-2">
-        <h2 className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-400 tracking-tighter">
-          Miu Verify
+    <aside className="w-72 bg-[#020202]/60 backdrop-blur-3xl border-r border-white/5 flex flex-col p-6 z-50">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", bounce: 0.5 }}
+        className="mb-12 px-4 pt-4"
+      >
+        <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-500 to-purple-500 tracking-tighter lowercase">
+          miu verify.
         </h2>
-        <div className="h-1 w-12 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full mt-2"></div>
-      </div>
+        <div className="h-1.5 w-12 bg-gradient-to-r from-cyan-400 to-purple-600 rounded-full mt-2 shadow-[0_0_15px_rgba(34,211,238,0.5)]" />
+      </motion.div>
 
-      <nav className="flex-1 space-y-2">
-        {menuItems.map((item) => {
+      <nav className="flex-1 space-y-3">
+        {menuItems.map((item, i) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
 
           return (
-            <Link
+            <motion.div
               key={item.name}
-              href={item.href}
-              className={cn(
-                "group relative flex items-center space-x-3 px-4 py-3.5 rounded-xl transition-all text-sm font-semibold overflow-hidden",
-                isActive ? "text-white" : "text-gray-400 hover:text-white"
-              )}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.1, type: "spring", stiffness: 300, damping: 20 }}
             >
-              {isActive && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute inset-0 bg-white/10 shadow-[inset_0_0_20px_rgba(168,85,247,0.15)] rounded-xl border border-white/10"
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                />
-              )}
-              <Icon className={cn("relative z-10 w-5 h-5 transition-transform duration-300", isActive ? "scale-110 text-purple-400" : "group-hover:scale-110")} strokeWidth={isActive ? 2.5 : 2} />
-              <span className="relative z-10 tracking-wide">{item.name}</span>
-            </Link>
+              <Link
+                href={item.href}
+                className={cn(
+                  "group relative flex items-center space-x-4 px-5 py-4 rounded-2xl transition-all text-base font-bold overflow-hidden lowercase tracking-wide",
+                  isActive ? "text-white" : "text-gray-500 hover:text-white"
+                )}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 shadow-[inset_0_0_20px_rgba(168,85,247,0.2)] rounded-2xl border border-white/10"
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  />
+                )}
+                <Icon className={cn("relative z-10 w-5 h-5 transition-transform duration-300", isActive ? "scale-125 text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.8)]" : "group-hover:scale-110")} strokeWidth={2.5} />
+                <span className="relative z-10">{item.name}</span>
+              </Link>
+            </motion.div>
           );
         })}
       </nav>
@@ -56,10 +67,10 @@ export default function Sidebar() {
       <div className="pt-6 border-t border-white/5 mt-auto">
         <Link
           href="/login"
-          className="group flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-bold text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all uppercase tracking-widest"
+          className="group flex items-center justify-center space-x-3 px-4 py-4 rounded-2xl text-xs font-black text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all uppercase tracking-[0.2em]"
         >
-          <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span>Terminate Session</span>
+          <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <span>Logout</span>
         </Link>
       </div>
     </aside>

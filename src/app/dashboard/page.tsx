@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ScrollText, ArrowLeft, ChevronDown, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useModal } from '@/context/ModalContext';
+import { supabase } from '@/utils/supabaseClient';
 
 type WorksetView = 'selection' | 'issue' | 'register';
 
@@ -176,8 +177,26 @@ export default function Dashboard() {
             certRef, formData.studentName, formData.matricNumber, formData.department, formData.classOfDegree, formData.date
           );
           await tx.wait();
+
+          // Save to Supabase Certificates Table
+          const { error: supabaseError } = await supabase.from('certificates').insert([
+            {
+              reference_id: certRef,
+              student_name: formData.studentName,
+              matric_number: formData.matricNumber,
+              department: formData.department,
+              class_of_degree: formData.classOfDegree,
+              date_issued: formData.date,
+              action_type: view
+            }
+          ]);
+          
+          if (supabaseError) {
+             console.error("Supabase insert failed:", supabaseError);
+          }
+
           showLoading(false);
-          showAlert("Transaction Successful", "Certificate has been cryptographically anchored to the blockchain.", "success");
+          showAlert("Transaction Successful", "Certificate has been cryptographically anchored to the blockchain and synced to the database.", "success");
         } catch(contractErr: any) {
           showLoading(false);
           console.error("Contract write rejected or failed.", contractErr);

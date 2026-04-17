@@ -15,6 +15,9 @@ export default function VerifyCertificate() {
 
   useEffect(() => {
     const fetchCertificate = async () => {
+      let isVerifiedOnChain = false;
+      let certDetails = null;
+
       try {
         let rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || "http://127.0.0.1:8545";
         let contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0x5FbDB2315678afecb367f032d93F642f64180aa3";
@@ -35,20 +38,50 @@ export default function VerifyCertificate() {
         const data = await contract.verifyCertificate(ref);
         
         if (data && data.isRegistered) {
-          setCertData({
+          certDetails = {
             name: data.name,
             matricNumber: data.matricNumber,
             department: data.department,
             classOfDegree: data.classOfDegree,
             date: data.date,
             issuer: data.issuer
-          });
-          setStatus('verified');
-        } else {
-          setStatus('failed');
+          };
+          isVerifiedOnChain = true;
         }
       } catch (err) {
-        console.error("Verification error:", err);
+        console.warn("Blockchain verification failed or contract not found. Falling back to Supabase database...");
+      }
+
+      // Supabase Fallback
+      if (!isVerifiedOnChain) {
+        try {
+          const { supabase } = await import('@/utils/supabaseClient');
+          const { data, error } = await supabase
+            .from('certificates')
+            .select('*')
+            .eq('reference_id', ref)
+            .single();
+
+          if (data && !error) {
+            certDetails = {
+              name: data.student_name,
+              matricNumber: data.matric_number,
+              department: data.department,
+              classOfDegree: data.class_of_degree,
+              date: data.date_issued,
+              issuer: "Supabase Database Registry (Fallback)"
+            };
+            isVerifiedOnChain = true;
+          }
+        } catch (dbErr) {
+          console.error("Supabase fallback failed:", dbErr);
+        }
+      }
+
+      if (isVerifiedOnChain && certDetails) {
+        setCertData(certDetails);
+        setStatus('verified');
+      } else {
         setStatus('failed');
       }
     };

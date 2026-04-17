@@ -2,7 +2,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import { CheckCircle2, XCircle, Loader2, ArrowLeft, ShieldCheck, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -56,7 +56,7 @@ export default function VerifyCertificate() {
     fetchCertificate();
   }, [ref]);
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0, y: 50, scale: 0.9 },
     visible: { 
       opacity: 1, 
@@ -72,7 +72,7 @@ export default function VerifyCertificate() {
     }
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20, scale: 0.95 },
     visible: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 300, damping: 20 } }
   };

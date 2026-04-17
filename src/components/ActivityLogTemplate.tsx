@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabaseClient';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Search, Clock, ListFilter, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -69,7 +69,7 @@ export default function ActivityLogTemplate({ title, subtitle, baseFilter, showT
       return sortOrder === "Newest" ? tB - tA : tA - tB;
     });
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -77,7 +77,7 @@ export default function ActivityLogTemplate({ title, subtitle, baseFilter, showT
     }
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20, scale: 0.95 },
     show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", bounce: 0.5 } },
     exit: { opacity: 0, scale: 0.9, transition: { duration: 0.2 } }

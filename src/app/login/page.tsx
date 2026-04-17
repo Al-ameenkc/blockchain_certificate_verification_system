@@ -1,6 +1,8 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { ShieldAlert, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
   const [authKey, setAuthKey] = useState('');
@@ -8,57 +10,76 @@ export default function LoginPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Logic for key validation will go here
     if (authKey) console.log("Authenticating...");
     router.push('/dashboard');
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Dynamic Purple Glows */}
-      <div className="absolute -top-24 -left-24 w-96 h-96 bg-purple-600/10 rounded-full blur-[120px]"></div>
-      <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-900/10 rounded-full blur-[120px]"></div>
+    <div className="min-h-screen bg-[#020202] flex items-center justify-center p-6 relative overflow-hidden font-sans selection:bg-cyan-500/30">
+      {/* Intense Background Glows */}
+      <div className="absolute -top-24 -left-24 w-[500px] h-[500px] bg-cyan-600/20 rounded-full blur-[150px] pointer-events-none mix-blend-screen" />
+      <div className="absolute -bottom-24 -right-24 w-[500px] h-[500px] bg-purple-700/20 rounded-full blur-[150px] pointer-events-none mix-blend-screen" />
 
-      <div className="max-w-md w-full relative z-10">
-        <div className="bg-[#0A0A0A] border border-purple-500/20 rounded-3xl p-10 backdrop-blur-xl shadow-2xl">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9, y: 30 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: "spring", bounce: 0.5, duration: 0.8 }}
+        className="max-w-md w-full relative z-10"
+      >
+        <div className="bg-[#0A0A0A]/80 backdrop-blur-3xl border-2 border-white/5 rounded-[3rem] p-12 shadow-[0_30px_100px_rgba(0,0,0,0.8)] relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/5 to-transparent pointer-events-none" />
+          
           <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-800 shadow-[0_0_30_rgba(168,85,247,0.4)] mb-6">
-              <span className="text-white text-xl font-bold">M</span>
-            </div>
-            <h1 className="text-2xl font-semibold text-white tracking-tight">Miu Admin Portal</h1>
-            <p className="text-purple-400/50 mt-2 text-sm">Secure Blockchain Access</p>
+            <motion.div 
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", bounce: 0.6, delay: 0.2 }}
+              className="inline-flex items-center justify-center w-20 h-20 rounded-[1.5rem] bg-cyan-400/10 border-2 border-cyan-400/50 shadow-[0_0_30px_rgba(34,211,238,0.3)] mb-6"
+            >
+              <ShieldAlert className="w-10 h-10 text-cyan-400" strokeWidth={2.5} />
+            </motion.div>
+            <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500 tracking-tighter lowercase">
+              admin portal.
+            </h1>
+            <p className="text-cyan-400/80 mt-3 font-black tracking-[0.2em] uppercase text-[10px]">
+              secure blockchain access
+            </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-10">
-            <div className="flex flex-col">
-              {/* Increased margin-bottom on the label */}
-              <label className="text-sm font-medium text-purple-200/70 ml-1 mb-5">
+            <div className="flex flex-col group/input">
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-2 mb-4 group-focus-within/input:text-cyan-400 transition-colors">
                 Authentication Key
               </label>
               <input 
                 type="password" 
                 required
-                className="w-full px-5 py-4 bg-black/50 border border-purple-500/10 rounded-2xl focus:border-purple-500/50 focus:ring-0 outline-none transition-all text-white placeholder-gray-700 tracking-[0.4em]"
+                className="w-full px-6 py-5 bg-[#020202]/80 border-2 border-white/10 rounded-2xl focus:border-cyan-400 focus:bg-white/5 outline-none transition-all text-white placeholder-gray-700 tracking-[0.4em] shadow-inner text-xl font-black"
                 placeholder="••••••••••••"
                 onChange={(e) => setAuthKey(e.target.value)}
               />
             </div>
             
-            <button 
+            <motion.button 
+              whileHover={{ scale: 1.03, y: -5 }}
+              whileTap={{ scale: 0.96 }}
               type="submit"
-              className="w-full py-4 bg-white text-black hover:bg-purple-500 hover:text-white rounded-2xl font-bold transition-all duration-300 shadow-lg active:scale-95"
+              className="group relative w-full py-6 bg-gradient-to-r from-cyan-400 to-blue-500 text-black rounded-2xl font-black text-xl hover:brightness-110 transition-all flex items-center justify-center space-x-3 overflow-hidden shadow-[0_15px_30px_rgba(34,211,238,0.3)] lowercase tracking-tight"
             >
-              Access Dashboard
-            </button>
+              <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
+              <span>access dashboard.</span>
+              <ArrowRight className="w-6 h-6 text-black group-hover:translate-x-1 transition-transform" strokeWidth={3} />
+            </motion.button>
           </form>
 
-          <div className="mt-12 pt-6 border-t border-purple-500/5 text-center">
-            <p className="text-[11px] text-gray-600 tracking-wide font-medium">
-              Mewar International University • Node Status: Online
+          <div className="mt-12 pt-8 border-t-2 border-white/5 text-center">
+            <p className="text-[10px] text-gray-600 font-black uppercase tracking-[0.2em] flex items-center justify-center space-x-2">
+              <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,211,238,1)]" />
+              <span>Node Online</span>
             </p>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

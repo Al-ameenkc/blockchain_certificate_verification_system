@@ -1,13 +1,18 @@
 "use client";
-import { useSearchParams, useParams } from 'next/navigation';
+import { useSearchParams, useParams, useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import { useRef, useState } from 'react';
 import { logActivity } from '@/utils/logger';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Save, FileText, Printer } from 'lucide-react';
+import { useModal } from '@/context/ModalContext';
 
 export default function CertificatePage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const printRef = useRef<HTMLDivElement>(null);
+  const { showLoading, showAlert } = useModal();
 
   const toTitleCase = (str: string) => {
     return str.toLowerCase().replace(/\b\w/g, s => s.toUpperCase());
@@ -45,53 +50,97 @@ export default function CertificatePage() {
   const handlePrint = () => window.print();
 
   const handleSaveDraft = () => {
-    const actionName = viewType === 'issue' ? 'Issued Certificate' : 'Registered Certificate';
-    const url = window.location.pathname + window.location.search;
-    logActivity(`${actionName} (Draft)`, `Draft for ${data.name} (${data.matric})`, url);
-    setIsSaved(true);
-    alert('Draft saved successfully!');
+    showLoading(true);
+    setTimeout(() => {
+      const actionName = viewType === 'issue' ? 'Issued Certificate' : 'Registered Certificate';
+      const url = window.location.pathname + window.location.search;
+      logActivity(`${actionName} (Draft)`, `Draft for ${data.name} (${data.matric})`, url);
+      setIsSaved(true);
+      showLoading(false);
+      showAlert("Draft Anchored", "The document draft was successfully saved to the ledger.", "success");
+    }, 800);
   };
 
   const handleSaveFile = () => {
-    const actionName = viewType === 'issue' ? 'Issued Certificate' : 'Registered Certificate';
-    const url = window.location.pathname + window.location.search;
-    logActivity(actionName, `File saved locally for ${data.name}`, url);
-    setIsSaved(true);
-    alert('File saved successfully!');
+    showLoading(true);
+    setTimeout(() => {
+      const actionName = viewType === 'issue' ? 'Issued Certificate' : 'Registered Certificate';
+      const url = window.location.pathname + window.location.search;
+      logActivity(actionName, `File saved locally for ${data.name}`, url);
+      setIsSaved(true);
+      showLoading(false);
+      showAlert("File Saved", "The certificate file was successfully exported.", "success");
+    }, 800);
   };
 
   const handleBack = () => {
     if (!isSaved) {
       if (window.confirm("You have unsaved work, do you want to save as draft?")) {
         handleSaveDraft();
-        window.history.back();
+        router.back();
       } else {
-        window.history.back();
+        router.back();
       }
     } else {
-      window.history.back();
+      router.back();
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] py-10 flex flex-col items-center print:bg-white print:py-0 font-sans">
+    <div className="min-h-screen bg-[#020202] py-10 flex flex-col items-center print:bg-white print:py-0 font-sans relative overflow-hidden selection:bg-cyan-500/30">
+      
+      {/* Cyber Orbs (Hidden during print) */}
+      <div className="fixed top-0 left-0 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[150px] pointer-events-none -z-10 mix-blend-screen print:hidden" />
+      <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[150px] pointer-events-none -z-10 mix-blend-screen print:hidden" />
+
       {/* Control Bar */}
-      <div className="w-full max-w-4xl flex justify-between items-center mb-8 px-6 print:hidden text-white overflow-x-auto gap-4">
-        <button onClick={handleBack} className="text-purple-400 font-bold hover:text-purple-300 transition-colors flex items-center space-x-2 shrink-0">
-          <span>←</span> <span>Back to Console</span>
+      <motion.div 
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: "spring", bounce: 0.4 }}
+        className="w-full max-w-5xl flex flex-col md:flex-row justify-between items-center mb-12 px-8 py-6 print:hidden bg-[#0A0A0A]/80 backdrop-blur-3xl border-2 border-white/5 rounded-[3rem] shadow-[0_20px_60px_rgba(0,0,0,0.8)] z-20 relative"
+      >
+        <button 
+          onClick={handleBack} 
+          className="text-cyan-400 hover:text-white transition-colors flex items-center space-x-3 mb-6 md:mb-0 group bg-cyan-500/10 px-6 py-3 rounded-full uppercase tracking-[0.2em] font-black text-[10px]"
+        >
+          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" /> 
+          <span>back to console</span>
         </button>
-        <div className="flex items-center space-x-3 shrink-0">
-          <button onClick={handleSaveFile} className="bg-[#111] border border-purple-500/20 text-white px-5 py-3 rounded-2xl font-bold hover:bg-purple-900/20 transition-all flex items-center space-x-2">
-            <span>💾</span> <span>Save File</span>
-          </button>
-          <button onClick={handleSaveDraft} className="bg-[#111] border border-purple-500/20 text-white px-5 py-3 rounded-2xl font-bold hover:bg-purple-900/20 transition-all flex items-center space-x-2">
-            <span>📝</span> <span>Save as Draft</span>
-          </button>
-          <button onClick={handlePrint} className="bg-white text-black px-6 py-3 rounded-2xl font-bold shadow-lg hover:bg-purple-600 hover:text-white transition-all active:scale-95">
-            Print Document
-          </button>
+        
+        <div className="flex items-center space-x-4">
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleSaveFile} 
+            className="group relative bg-[#020202]/80 border-2 border-white/10 text-white px-6 py-4 rounded-2xl font-black hover:border-cyan-400 hover:bg-white/5 transition-all flex items-center space-x-3 lowercase tracking-tight shadow-inner"
+          >
+            <Save className="w-5 h-5 text-cyan-400 group-hover:scale-110 transition-transform" /> 
+            <span>save file.</span>
+          </motion.button>
+          
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleSaveDraft} 
+            className="group relative bg-[#020202]/80 border-2 border-white/10 text-white px-6 py-4 rounded-2xl font-black hover:border-purple-400 hover:bg-white/5 transition-all flex items-center space-x-3 lowercase tracking-tight shadow-inner"
+          >
+            <FileText className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" /> 
+            <span>save draft.</span>
+          </motion.button>
+          
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handlePrint} 
+            className="group relative bg-gradient-to-r from-cyan-400 to-blue-500 text-black px-8 py-4 rounded-2xl font-black shadow-[0_10px_30px_rgba(34,211,238,0.3)] hover:brightness-110 transition-all flex items-center space-x-3 lowercase tracking-tight overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
+            <Printer className="w-5 h-5" strokeWidth={3} />
+            <span>print out.</span>
+          </motion.button>
         </div>
-      </div>
+      </motion.div>
 
       {/* The Certificate Layout */}
       <div 

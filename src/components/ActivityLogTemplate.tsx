@@ -3,6 +3,9 @@ import { useEffect, useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabaseClient';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Clock, ListFilter, ArrowRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export interface Activity {
   id: string;
@@ -66,86 +69,162 @@ export default function ActivityLogTemplate({ title, subtitle, baseFilter, showT
       return sortOrder === "Newest" ? tB - tA : tA - tB;
     });
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20, scale: 0.95 },
+    show: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", bounce: 0.5 } },
+    exit: { opacity: 0, scale: 0.9, transition: { duration: 0.2 } }
+  };
+
   return (
-    <div className="min-h-screen bg-[#050505] text-gray-200 flex font-sans">
+    <div className="min-h-screen bg-[#020202] text-gray-200 flex font-sans selection:bg-cyan-500/30 overflow-hidden relative">
       <Sidebar />
-      <main className="flex-1 p-12 overflow-y-auto">
-        <header className="flex justify-between items-start mb-12">
-          <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">{title}</h1>
-            <p className="text-purple-400/40 text-sm mt-1">{subtitle}</p>
-          </div>
+
+      {/* Cyber Orbs */}
+      <div className="fixed top-[-10%] right-[-10%] w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[150px] pointer-events-none -z-10 mix-blend-screen" />
+      <div className="fixed bottom-0 left-[20%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[150px] pointer-events-none -z-10 mix-blend-screen" />
+
+      <main className="flex-1 p-12 overflow-y-auto relative z-10">
+        <header className="flex justify-between items-start mb-16 mt-4">
+          <motion.div 
+            initial={{ opacity: 0, x: -30, filter: "blur(10px)" }} 
+            animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
+          >
+            <h1 className="text-[3.5rem] font-black text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-gray-500 tracking-tighter leading-none mb-4 lowercase">
+              {title.toLowerCase()}.
+            </h1>
+            <p className="text-cyan-400/80 font-bold tracking-[0.2em] uppercase text-xs">
+              // {subtitle}
+            </p>
+          </motion.div>
           
-          <div className="bg-[#0A0A0A] border border-purple-500/10 rounded-2xl px-5 py-3 flex items-center space-x-4">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Node: Active</span>
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.5, rotate: -10 }} 
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            transition={{ type: "spring", bounce: 0.6 }}
+            className="bg-[#0A0A0A]/80 backdrop-blur-xl border-2 border-white/5 rounded-full px-6 py-4 flex items-center space-x-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
+          >
+            <div className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500 shadow-[0_0_10px_rgba(34,211,238,1)]"></span>
+            </div>
+            <span className="text-xs font-black text-gray-300 uppercase tracking-widest">Node: Active</span>
+          </motion.div>
         </header>
 
-        <div className="max-w-4xl bg-[#0A0A0A] rounded-3xl border border-purple-500/10 p-8 shadow-2xl mb-8">
-          <div className="flex flex-col md:flex-row justify-between gap-4">
-            <div className="relative flex-1">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">🔍</span>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, type: "spring" }}
+          className="max-w-5xl bg-[#0A0A0A]/60 backdrop-blur-3xl rounded-[2.5rem] border-2 border-white/5 p-8 shadow-[0_20px_60px_rgba(0,0,0,0.5)] mb-10 relative overflow-hidden group"
+        >
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 to-purple-500 opacity-50 group-hover:opacity-100 transition-opacity" />
+          
+          <div className="flex flex-col md:flex-row justify-between gap-6">
+            <div className="relative flex-1 group/search">
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-500 group-focus-within/search:text-cyan-400 transition-colors" />
               <input 
                 type="text" 
-                placeholder="Search names, matriculation numbers, or actions..." 
+                placeholder="search ledgers..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#111] border border-purple-500/20 text-white rounded-xl py-3 pl-12 pr-4 focus:outline-none focus:border-purple-500/60 transition-all placeholder-gray-600"
+                className="w-full bg-[#020202]/80 border-2 border-white/10 text-white rounded-3xl py-5 pl-16 pr-6 focus:outline-none focus:border-cyan-400 focus:bg-white/5 transition-all placeholder-gray-600 font-black tracking-tight text-lg lowercase shadow-inner"
               />
             </div>
             
             <div className="flex gap-4">
               {showTypeFilter && (
-                <select 
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="bg-[#111] border border-purple-500/20 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500/60 appearance-none cursor-pointer"
-                >
-                  <option value="All">All Types</option>
-                  <option value="Saved">Final / Saved</option>
-                  <option value="Draft">Drafts</option>
-                </select>
+                <div className="relative group/filter">
+                  <ListFilter className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within/filter:text-cyan-400 transition-colors pointer-events-none" />
+                  <select 
+                    value={typeFilter}
+                    onChange={(e) => setTypeFilter(e.target.value)}
+                    className="bg-[#020202]/80 border-2 border-white/10 text-white font-black tracking-tight rounded-3xl pl-12 pr-6 py-5 focus:outline-none focus:border-cyan-400 appearance-none cursor-pointer hover:bg-white/5 transition-all shadow-inner lowercase"
+                  >
+                    <option value="All">all types</option>
+                    <option value="Saved">anchored</option>
+                    <option value="Draft">drafts</option>
+                  </select>
+                </div>
               )}
-              <select 
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-                className="bg-[#111] border border-purple-500/20 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500/60 appearance-none cursor-pointer"
-              >
-                <option value="Newest">Newest First</option>
-                <option value="Oldest">Oldest First</option>
-              </select>
+              <div className="relative group/sort">
+                <Clock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within/sort:text-cyan-400 transition-colors pointer-events-none" />
+                <select 
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  className="bg-[#020202]/80 border-2 border-white/10 text-white font-black tracking-tight rounded-3xl pl-12 pr-6 py-5 focus:outline-none focus:border-cyan-400 appearance-none cursor-pointer hover:bg-white/5 transition-all shadow-inner lowercase"
+                >
+                  <option value="Newest">newest</option>
+                  <option value="Oldest">oldest</option>
+                </select>
+              </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="max-w-4xl space-y-4">
-          {filteredActivities.length === 0 ? (
-            <div className="text-center text-gray-600 py-12 bg-[#0A0A0A] rounded-3xl border border-purple-500/5 shadow-2xl">
-              No matching records found.
-            </div>
-          ) : (
-            filteredActivities.map((activity) => (
-              <div 
-                key={activity.id} 
-                onClick={() => activity.url && router.push(activity.url)}
-                className={`flex flex-col md:flex-row justify-between items-start md:items-center p-6 bg-[#0A0A0A] rounded-2xl border border-purple-500/10 hover:border-purple-500/40 transition-all shadow-xl shadow-purple-900/5 hover:-translate-y-1 ${activity.url ? 'cursor-pointer hover:bg-[#111]' : ''}`}
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="max-w-5xl space-y-5"
+        >
+          <AnimatePresence>
+            {filteredActivities.length === 0 ? (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center text-gray-500 py-20 bg-[#0A0A0A]/40 backdrop-blur-md rounded-[3rem] border-2 border-white/5 border-dashed font-black uppercase tracking-[0.3em] text-xs"
               >
-                <div>
-                  <div className="flex items-center space-x-3 mb-1">
-                    <span className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)]"></span>
-                    <h3 className="text-base font-bold text-gray-100">{activity.action}</h3>
+                no matching records located in ledger
+              </motion.div>
+            ) : (
+              filteredActivities.map((activity) => (
+                <motion.div 
+                  key={activity.id}
+                  variants={itemVariants}
+                  layout
+                  onClick={() => activity.url && router.push(activity.url)}
+                  className={cn(
+                    "group flex flex-col md:flex-row justify-between items-start md:items-center p-8 bg-[#0A0A0A]/80 backdrop-blur-xl rounded-[2rem] border-2 transition-all duration-300 relative overflow-hidden",
+                    activity.url ? 'cursor-pointer hover:border-cyan-400 hover:shadow-[0_20px_40px_rgba(34,211,238,0.1)] border-white/10' : 'border-white/5'
+                  )}
+                >
+                  {activity.url && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/0 via-cyan-400/5 to-cyan-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
+                  )}
+                  
+                  <div className="relative z-10 flex-1 pr-8">
+                    <div className="flex items-center space-x-4 mb-2">
+                      <span className="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,1)]" />
+                      <h3 className="text-xl font-black text-white tracking-tight lowercase">{activity.action}</h3>
+                    </div>
+                    <p className="text-base text-gray-400 font-medium pl-7 leading-relaxed">{activity.details}</p>
                   </div>
-                  <p className="text-sm text-gray-400 pl-5">{activity.details}</p>
-                </div>
-                <div className="mt-4 md:mt-0 text-xs text-purple-400/80 font-mono bg-[#111] px-4 py-2 rounded-xl border border-purple-500/20 flex items-center space-x-2">
-                  <span>⏰</span>
-                  <span>{new Date(activity.timestamp).toLocaleString()}</span>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+
+                  <div className="mt-6 md:mt-0 flex items-center space-x-6 relative z-10">
+                    <div className="text-[10px] text-cyan-400 font-black tracking-[0.2em] uppercase bg-cyan-500/10 px-5 py-3 rounded-xl border-2 border-cyan-500/20 shadow-inner flex flex-col items-end">
+                      <span className="text-gray-500 mb-1">TIMESTAMP</span>
+                      <span>{new Date(activity.timestamp).toLocaleString()}</span>
+                    </div>
+                    {activity.url && (
+                      <div className="w-12 h-12 rounded-2xl bg-white/5 border-2 border-white/10 flex items-center justify-center group-hover:bg-cyan-400 group-hover:text-black transition-colors duration-300">
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" strokeWidth={3} />
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </AnimatePresence>
+        </motion.div>
       </main>
     </div>
   );

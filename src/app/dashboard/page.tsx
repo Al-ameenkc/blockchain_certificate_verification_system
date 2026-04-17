@@ -6,6 +6,7 @@ import { ethers } from 'ethers';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ScrollText, ArrowLeft, ChevronDown, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useModal } from '@/context/ModalContext';
 
 type WorksetView = 'selection' | 'issue' | 'register';
 
@@ -136,6 +137,8 @@ export default function Dashboard() {
     date: new Date().toISOString().split('T')[0]
   });
 
+  const { showLoading, showAlert } = useModal();
+
   const handleCommit = async (e: React.FormEvent) => {
     e.preventDefault();
     const certRef = `MIU-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
@@ -153,7 +156,7 @@ export default function Dashboard() {
           });
         } catch (switchError: any) {
           console.error("Failed to switch to Sepolia Testnet", switchError);
-          alert("Please switch your MetaMask network to the Sepolia Testnet.");
+          showAlert("Network Error", "Please switch your MetaMask network to the Sepolia Testnet.", "error");
           return;
         }
 
@@ -168,33 +171,39 @@ export default function Dashboard() {
         const contract = new ethers.Contract(contractAddress, abi, signer);
         
         try {
+          showLoading(true);
           const tx = await contract.issueCertificate(
             certRef, formData.studentName, formData.matricNumber, formData.department, formData.classOfDegree, formData.date
           );
           await tx.wait();
+          showLoading(false);
+          showAlert("Transaction Successful", "Certificate has been cryptographically anchored to the blockchain.", "success");
         } catch(contractErr: any) {
+          showLoading(false);
           console.error("Contract write rejected or failed.", contractErr);
           if (contractErr.code === 'ACTION_REJECTED') {
-            alert("Transaction was cancelled by the user.");
+            showAlert("Transaction Cancelled", "Transaction was cancelled by the user.", "info");
           } else {
-            alert("Transaction Failed. Ensure you are connected to the Sepolia testnet and have enough ETH to pay for gas.");
+            showAlert("Transaction Failed", "Ensure you are connected to the Sepolia testnet and have enough ETH to pay for gas.", "error");
           }
           return;
         }
       } else {
-        alert("MetaMask (or a compatible Web3 wallet) is required to issue certificates on the Ethereum network! Please install it.");
+        showAlert("Wallet Missing", "MetaMask (or a compatible Web3 wallet) is required to issue certificates on the Ethereum network! Please install it.", "error");
         return;
       }
     } catch(err: any) {
       console.error("Ethereum Wallet Connection Failed:", err);
       if (err.code === 4001) {
-        alert("Wallet connection was cancelled by the user.");
+        showAlert("Connection Cancelled", "Wallet connection was cancelled by the user.", "info");
       } else {
-        alert("Ethereum Wallet Connection Failed. Please unlock MetaMask and try again.");
+        showAlert("Connection Failed", "Ethereum Wallet Connection Failed. Please unlock MetaMask and try again.", "error");
       }
       return;
     }
     
+    // Wait for the alert to be acknowledged or just push right away.
+    // In our case, push immediately, but the modal context will stay open on top!
     router.push(`/certificate/${certRef}?name=${formData.studentName}&matric=${formData.matricNumber}&dept=${formData.department}&class=${formData.classOfDegree}&date=${formData.date}&viewType=${view}`);
   };
 

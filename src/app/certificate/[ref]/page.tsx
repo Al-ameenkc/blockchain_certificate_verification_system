@@ -193,7 +193,7 @@ export default function CertificatePage() {
 
           <div className="flex flex-col items-center p-2 bg-white border border-gray-100 rounded-xl shadow-sm">
              <div className="p-1 border border-gray-100">
-                <QRCodeSVG value={`https://miu-verify.vercel.app/verify/${data.ref}`} size={105} />
+                <QRCodeSVG value={typeof window !== 'undefined' ? `${window.location.origin}/verify/${data.ref}` : `https://miu-verify.vercel.app/verify/${data.ref}`} size={105} />
              </div>
              <p className="text-[8px] mt-2 font-mono uppercase text-gray-400 tracking-tighter">Verify Authenticity</p>
           </div>

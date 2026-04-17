@@ -105,8 +105,24 @@ export default function Dashboard() {
 
     try {
       if (typeof window !== 'undefined' && (window as any).ethereum) {
+        // Request account access if needed
+        await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
+        
+        // Ensure network is Sepolia Testnet (chainId: 0xaa36a7)
+        try {
+          await (window as any).ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0xaa36a7' }],
+          });
+        } catch (switchError: any) {
+          console.error("Failed to switch to Sepolia Testnet", switchError);
+          alert("Please switch your MetaMask network to the Sepolia Testnet.");
+          return;
+        }
+
         const provider = new ethers.BrowserProvider((window as any).ethereum);
         const signer = await provider.getSigner();
+
         const contractAddress = localStorage.getItem('contract_address') || process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0x5FbDB2315678afecb367f032d93F642f64180aa3";
         
         const abi = [
@@ -119,14 +135,27 @@ export default function Dashboard() {
             certRef, formData.studentName, formData.matricNumber, formData.department, formData.classOfDegree, formData.date
           );
           await tx.wait();
-        } catch(contractErr) {
-          console.warn("Contract write rejected or no network. Falling back to optimistic UI update.", contractErr);
+        } catch(contractErr: any) {
+          console.error("Contract write rejected or failed.", contractErr);
+          if (contractErr.code === 'ACTION_REJECTED') {
+            alert("Transaction was cancelled by the user.");
+          } else {
+            alert("Transaction Failed. Ensure you are connected to the Sepolia testnet and have enough ETH to pay for gas.");
+          }
+          return;
         }
       } else {
-        console.warn("No Ethereum provider detected (e.g., MetaMask). Proceeding in mock mode.");
+        alert("MetaMask (or a compatible Web3 wallet) is required to issue certificates on the Ethereum network! Please install it.");
+        return;
       }
-    } catch(err) {
+    } catch(err: any) {
       console.error("Ethereum Wallet Connection Failed:", err);
+      if (err.code === 4001) {
+        alert("Wallet connection was cancelled by the user.");
+      } else {
+        alert("Ethereum Wallet Connection Failed. Please unlock MetaMask and try again.");
+      }
+      return;
     }
     
     // Redirect to the certificate view

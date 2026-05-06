@@ -197,7 +197,20 @@ export default function Dashboard() {
           ]);
           
           if (supabaseError) {
-             console.error("Supabase insert failed:", supabaseError);
+            console.error("Supabase insert failed:", supabaseError);
+            const isNetworkFailure =
+              typeof supabaseError.message === 'string' &&
+              supabaseError.message.toLowerCase().includes('failed to fetch');
+
+            showLoading(false);
+            showAlert(
+              "Database Sync Failed",
+              isNetworkFailure
+                ? "Certificate was written on-chain, but we could not reach Supabase. Check your NEXT_PUBLIC_SUPABASE_URL value, internet connection, and whether your Supabase project is active."
+                : `Certificate was written on-chain, but database sync failed: ${supabaseError.message}`,
+              "error"
+            );
+            return;
           }
 
           showLoading(false);

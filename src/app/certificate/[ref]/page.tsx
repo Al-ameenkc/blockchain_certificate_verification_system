@@ -1,7 +1,7 @@
 "use client";
 import { useSearchParams, useParams, useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { logActivity } from '@/utils/logger';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Save, SendHorizontal, Printer } from 'lucide-react';
@@ -10,12 +10,19 @@ import { ethers } from 'ethers';
 import { supabase } from '@/utils/supabaseClient';
 import { readCertificateOnChain, normalizeCertificateRef } from '@/lib/readCertificateOnChain';
 
+/** CSS px per mm at 96dpi — used to size the fixed A4 sheet and compute uniform scale on screen. */
+const MM_TO_CSS_PX = 96 / 25.4;
+const A4_WIDTH_PX = 210 * MM_TO_CSS_PX;
+const A4_HEIGHT_PX = 297 * MM_TO_CSS_PX;
+
 export default function CertificatePage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
   const printRef = useRef<HTMLDivElement>(null);
-  const { showLoading, showAlert } = useModal();
+  const scaleViewportRef = useRef<HTMLDivElement>(null);
+  const [sheetScale, setSheetScale] = useState(1);
+  const { showLoading, showAlert, showConfirm } = useModal();
 
   const toTitleCase = (str: string) => {
     return str.toLowerCase().replace(/\b\w/g, s => s.toUpperCase());
@@ -75,6 +82,24 @@ export default function CertificatePage() {
   const [isSaved, setIsSaved] = useState(false);
   /** True only after a successful on-chain registration (verified via contract or after tx). */
   const [isAnchoredOnChain, setIsAnchoredOnChain] = useState(false);
+  /** True after chain + DB hydration so "unsaved" back prompt is not shown prematurely. */
+  const [loadSettled, setLoadSettled] = useState(false);
+
+  useLayoutEffect(() => {
+    const el = scaleViewportRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const w = el.getBoundingClientRect().width;
+      if (w <= 0) return;
+      setSheetScale(Math.min(1, w / A4_WIDTH_PX));
+    };
+
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const handlePrint = () => {
     if (!isAnchoredOnChain) {
@@ -90,9 +115,11 @@ export default function CertificatePage() {
 
   useEffect(() => {
     let cancelled = false;
+    setLoadSettled(false);
     const viewTypeFromUrl = searchParams.get("viewType");
 
     const init = async () => {
+      try {
       const viewTypeFallback = viewTypeFromUrl || "issue";
 
       let chainRow: {
@@ -161,6 +188,11 @@ export default function CertificatePage() {
         }
       } else if (dbRowLocal) {
         setDbRow(dbRowLocal);
+      }
+      } finally {
+        if (!cancelled) {
+          setLoadSettled(true);
+        }
       }
     };
 
@@ -310,52 +342,68 @@ export default function CertificatePage() {
   };
 
   const handleBack = () => {
+    if (!loadSettled) return;
+    if (!isSaved && !isAnchoredOnChain) {
+      showConfirm(
+        'Leave without saving?',
+        'You have not saved a draft or added this certificate to the blockchain. If you go back now, this certificate will be lost and will not appear in your records.',
+        () => {
+          router.back();
+        }
+      );
+      return;
+    }
     router.back();
   };
 
   return (
-    <div className="min-h-screen bg-[#020202] py-10 flex flex-col items-center print:bg-white print:py-0 font-sans relative overflow-hidden selection:bg-cyan-500/30">
+    <div className="relative flex min-h-screen min-h-dvh flex-col items-center overflow-x-hidden overflow-y-auto bg-[#020202] px-3 py-4 font-sans selection:bg-cyan-500/30 print:min-h-0 print:bg-white print:px-0 print:py-0 sm:px-6 sm:py-8">
       
       {/* Cyber Orbs (Hidden during print) */}
-      <div className="fixed top-0 left-0 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[150px] pointer-events-none -z-10 mix-blend-screen print:hidden" />
-      <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[150px] pointer-events-none -z-10 mix-blend-screen print:hidden" />
+      <div className="pointer-events-none fixed left-0 top-0 -z-10 h-[min(500px,100vw)] w-[min(500px,100vw)] rounded-full bg-cyan-600/10 blur-[150px] mix-blend-screen print:hidden" />
+      <div className="pointer-events-none fixed bottom-0 right-0 -z-10 h-[min(500px,100vw)] w-[min(500px,100vw)] rounded-full bg-purple-600/10 blur-[150px] mix-blend-screen print:hidden" />
 
       {/* Control Bar */}
       <motion.div 
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", bounce: 0.4 }}
-        className="w-full max-w-5xl flex flex-col md:flex-row justify-between items-center mb-12 px-8 py-6 print:hidden bg-[#0A0A0A]/80 backdrop-blur-3xl border-2 border-white/5 rounded-[3rem] shadow-[0_20px_60px_rgba(0,0,0,0.8)] z-20 relative"
+        className="relative z-20 mb-6 flex w-full max-w-5xl flex-col items-stretch gap-4 rounded-3xl border-2 border-white/5 bg-[#0A0A0A]/80 px-4 py-4 shadow-[0_20px_60px_rgba(0,0,0,0.8)] backdrop-blur-3xl print:hidden sm:mb-10 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:rounded-[3rem] sm:px-8 sm:py-6"
       >
         <button
+          type="button"
+          disabled={!loadSettled}
+          aria-busy={!loadSettled}
           onClick={handleBack}
-          className="text-cyan-400 hover:text-white transition-colors flex items-center space-x-3 mb-6 md:mb-0 md:absolute md:left-8 uppercase tracking-[0.2em] text-[10px]"
+          className="order-2 flex shrink-0 items-center justify-center space-x-2 text-[10px] uppercase tracking-[0.2em] text-cyan-400 transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-40 sm:order-1 sm:absolute sm:left-8 sm:justify-start"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="h-5 w-5" />
           <span>back</span>
         </button>
 
-        <div className="flex items-center space-x-4 w-full justify-center">
+        <div className="order-1 flex w-full flex-wrap items-center justify-center gap-3 sm:order-2 sm:gap-4">
           {!isAnchoredOnChain && (
             <>
               <motion.button 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                type="button"
                 onClick={handleSaveDraft} 
-                className="group relative bg-[#020202]/80 border-2 border-white/10 text-white px-6 py-4 rounded-2xl font-black hover:border-purple-400 hover:bg-white/5 transition-all flex items-center space-x-3 lowercase tracking-tight shadow-inner"
+                className="group relative flex min-w-0 flex-1 items-center justify-center space-x-2 rounded-2xl border-2 border-white/10 bg-[#020202]/80 px-4 py-3 font-black lowercase tracking-tight text-white shadow-inner transition-all hover:border-purple-400 hover:bg-white/5 sm:flex-initial sm:space-x-3 sm:px-6 sm:py-4"
               >
-                <Save className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" /> 
-                <span>save draft.</span>
+                <Save className="h-5 w-5 shrink-0 text-purple-400 transition-transform group-hover:scale-110" /> 
+                <span className="truncate">save draft.</span>
               </motion.button>
 
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                type="button"
                 onClick={handleSubmitToBlockchain}
-                className="group relative bg-emerald-500/20 border-2 border-emerald-500/40 text-emerald-100 px-6 py-4 rounded-2xl font-black hover:bg-emerald-500/30 transition-all flex items-center space-x-3 lowercase tracking-tight shadow-inner"
+                className="group relative flex min-w-0 flex-1 items-center justify-center space-x-2 rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/20 px-4 py-3 font-black lowercase tracking-tight text-emerald-100 shadow-inner transition-all hover:bg-emerald-500/30 sm:flex-initial sm:space-x-3 sm:px-6 sm:py-4"
               >
-                <SendHorizontal className="w-5 h-5 text-emerald-300 group-hover:scale-110 transition-transform" />
-                <span>add to blockchain.</span>
+                <SendHorizontal className="h-5 w-5 shrink-0 text-emerald-300 transition-transform group-hover:scale-110" />
+                <span className="truncate text-left leading-tight">add to blockchain.</span>
               </motion.button>
             </>
           )}
@@ -364,46 +412,64 @@ export default function CertificatePage() {
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              type="button"
               onClick={handlePrint} 
-              className="group relative bg-gradient-to-r from-cyan-400 to-blue-500 text-black px-8 py-4 rounded-2xl font-black shadow-[0_10px_30px_rgba(34,211,238,0.3)] hover:brightness-110 transition-all flex items-center space-x-3 lowercase tracking-tight overflow-hidden"
+              className="group relative flex w-full items-center justify-center space-x-3 overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 px-6 py-3 font-black lowercase tracking-tight text-black shadow-[0_10px_30px_rgba(34,211,238,0.3)] transition-all hover:brightness-110 sm:w-auto sm:px-8 sm:py-4"
             >
-              <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
-              <Printer className="w-5 h-5" strokeWidth={3} />
+              <div className="absolute inset-0 translate-x-[-100%] skew-x-12 bg-white/20 transition-transform duration-700 group-hover:translate-x-[100%]" />
+              <Printer className="h-5 w-5 shrink-0" strokeWidth={3} />
               <span>print out.</span>
             </motion.button>
           )}
         </div>
       </motion.div>
 
-      {/* The Certificate Layout */}
-      <div 
-        ref={printRef}
-        className="w-[210mm] h-[297mm] bg-white p-12 pb-20 relative flex flex-col border-[12px] border-double border-[#7a1b1b] text-black shadow-2xl print:shadow-none print:m-0 print:border-[10px] overflow-hidden"
+      {/* Fixed A4 layout — same on all viewports; scaled to fit width on small screens */}
+      <div
+        ref={scaleViewportRef}
+        className="certificate-scale-viewport mx-auto w-full max-w-[calc(100vw-1.5rem)] sm:max-w-[210mm] print:max-w-none"
       >
+        <div
+          className="certificate-scale-clip relative mx-auto overflow-hidden print:!m-0 print:!h-auto print:!w-auto print:!overflow-visible"
+          style={{
+            width: A4_WIDTH_PX * sheetScale,
+            height: A4_HEIGHT_PX * sheetScale,
+          }}
+        >
+          <div
+            ref={printRef}
+            className="certificate-sheet absolute left-0 top-0 flex flex-col overflow-hidden border-[12px] border-double border-[#7a1b1b] bg-white p-12 pb-20 text-black shadow-2xl print:relative print:left-auto print:top-auto print:shadow-none print:!m-0 print:!h-[297mm] print:!w-[210mm] print:!max-w-none print:!border-[10px] print:!transform-none"
+            style={{
+              width: A4_WIDTH_PX,
+              height: A4_HEIGHT_PX,
+              transform: `scale(${sheetScale})`,
+              transformOrigin: 'top left',
+            }}
+          >
         {/* Reference number at the absolute top right */}
-        <div className="absolute top-10 right-14 text-right">
-          <p className="font-bold text-base tracking-widest text-gray-900">REF. NO. {data.ref}</p>
+        <div className="absolute right-14 top-10 text-right">
+          <p className="text-base font-bold tracking-widest text-gray-900">REF. NO. {data.ref}</p>
         </div>
 
         {/* Header Section */}
-        <div className="text-center mb-4 pt-2">
-          <div className="flex justify-center mb-4">
-            <img src="/miulogo.png" alt="MIU Logo" className="w-20 h-auto object-contain" />
+        <div className="mb-4 pt-2 text-center">
+          <div className="mb-4 flex justify-center">
+            <img src="/miulogo.png" alt="MIU Logo" className="h-auto w-20 object-contain" />
           </div>
-          <h1 className="text-2xl font-serif font-black text-[#7a1b1b] tracking-tight leading-none uppercase">
+          <h1 className="font-serif text-2xl font-black uppercase leading-none tracking-tight text-[#7a1b1b]">
             MEWAR INTERNATIONAL UNIVERSITY
           </h1>
-          <p className="text-[11px] font-bold text-[#1e40af] mt-1 uppercase tracking-wider">
+          <p className="mt-1 text-[11px] font-bold uppercase tracking-wider text-[#1e40af]">
             Km 21 Abuja Keffi Road, Masaka, Nasarawa State, Nigeria
           </p>
         </div>
 
         {/* Contact Block & Date */}
-        <div className="flex justify-between items-start mb-6 px-4">
-          <div className="text-[10px] leading-[1.2] space-y-0.5 w-2/3 text-gray-900 font-medium">
+        <div className="mb-6 flex items-start justify-between px-4">
+          <div className="w-2/3 space-y-0.5 text-[10px] font-medium leading-[1.2] text-gray-900">
             <p className="font-bold">VICE-CHANCELLOR: Prof. Mehtab Alam</p>
             <p className="text-[9px] text-gray-700">B.SC, M.SC, M.Tech. PhD, D.Sc. (Comp. Sc.)</p>
-            <p className="font-bold pt-1">REGISTRAR: ALH. Mamoon A. Abubakar</p>
+            <p className="pt-1 font-bold">REGISTRAR: ALH. Mamoon A. Abubakar</p>
             <p className="text-[9px] text-gray-700">NCE, BA.ED, RAMN, FICEN</p>
             <div className="pt-2 leading-tight">
               <p>Website: www.miu.edu.ng</p>
@@ -412,72 +478,76 @@ export default function CertificatePage() {
             </div>
           </div>
           
-          <div className="text-right w-1/3 pt-12">
+          <div className="w-1/3 pt-12 text-right">
             <p className="text-sm font-bold">DATE: {data.date}</p>
           </div>
         </div>
 
-        {/* Main Body - Balanced for A4 fit */}
-        <div className="text-center flex-grow flex flex-col items-center justify-start space-y-6">
+        {/* Main Body */}
+        <div className="flex flex-grow flex-col items-center justify-start space-y-6 text-center">
           <div className="mb-2">
             <h2 className="text-xl font-bold uppercase tracking-tight text-gray-900">
               NOTIFICATION OF DEGREE EXAMINATIONS RESULT 2024/2025
             </h2>
           </div>
 
-          <p className="text-lg font-medium text-gray-700 italic">This is to certify that</p>
+          <p className="text-lg font-medium italic text-gray-700">This is to certify that</p>
           
           <div className="w-full max-w-[580px] border-b-2 border-dotted border-gray-400">
-            <h3 className="text-3xl font-serif pb-1 italic text-gray-950 font-semibold tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">
+            <h3 className="overflow-hidden text-ellipsis whitespace-nowrap pb-1 font-serif text-3xl font-semibold italic tracking-tight text-gray-950">
               {data.name}
             </h3>
           </div>
 
-          <div className="flex justify-center items-center space-x-2 text-lg">
+          <div className="flex items-center justify-center space-x-2 text-lg">
             <span>With Registration Number:</span>
-            <span className="font-bold border-b border-gray-400 px-6 font-mono text-gray-950 text-xl tracking-tight uppercase">
+            <span className="border-b border-gray-400 px-6 font-mono text-xl font-bold uppercase tracking-tight text-gray-950">
               {data.matric}
             </span>
           </div>
 
-          <div className="max-w-2xl mx-auto text-xl leading-relaxed text-gray-800 font-medium px-8">
+          <div className="mx-auto max-w-2xl px-8 text-xl font-medium leading-relaxed text-gray-800">
             has satisfied the Examiners and the Senate of the University in all the requirements for the award of the degree of
           </div>
 
           <div className="w-full max-w-[580px]">
-            <div className="text-2xl font-serif italic border-b-2 border-gray-400 pb-1 text-[#7a1b1b] font-semibold">
+            <div className="border-b-2 border-gray-400 pb-1 font-serif text-2xl font-semibold italic text-[#7a1b1b]">
               Bachelor of Science ({data.dept})
             </div>
           </div>
 
-          <div className="flex justify-center items-center space-x-2 text-xl italic font-bold text-gray-950">
+          <div className="flex items-center justify-center space-x-2 text-xl font-bold italic text-gray-950">
             <span>with</span>
             <span className="border-b border-gray-400 px-6">{data.class}</span>
           </div>
 
-          <div className="max-w-2xl mx-auto text-sm leading-relaxed px-10 text-gray-700">
+          <div className="mx-auto max-w-2xl px-10 text-sm leading-relaxed text-gray-700">
             The Degree will be conferred on you at the next Convocation ceremony of the University.
           </div>
 
-          <p className="text-xl italic font-medium text-gray-800">Accept our congratulations.</p>
+          <p className="text-xl font-medium italic text-gray-800">Accept our congratulations.</p>
         </div>
 
-        {/* Signature & QR Area - lifted up to prevent blocking */}
-        <div className="flex justify-between items-end px-6 pb-6 border-t border-transparent">
+        {/* Signature & QR Area */}
+        <div className="flex items-end justify-between border-t border-transparent px-6 pb-6">
           <div className="text-center">
-            <div className="w-60 border-b border-black mb-1.5 flex justify-center h-12 items-center">
-                {/* Visual signature line */}
-                <div className="w-48 h-[0.5px] bg-gray-200"></div>
+            <div className="mb-1.5 flex h-12 w-60 items-center justify-center border-b border-black">
+                <div className="h-[0.5px] w-48 bg-gray-200" />
             </div>
-            <p className="font-bold text-base text-gray-950">Alh. Mamoon A. Abubakar</p>
-            <p className="text-xs uppercase font-bold text-gray-600 tracking-widest">REGISTRAR</p>
+            <p className="text-base font-bold text-gray-950">Alh. Mamoon A. Abubakar</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-gray-600">REGISTRAR</p>
           </div>
 
-          <div className="flex flex-col items-center p-2 bg-white border border-gray-100 rounded-xl shadow-sm">
-             <div className="p-1 border border-gray-100">
-                <QRCodeSVG value={typeof window !== 'undefined' ? `${window.location.origin}/verify/${data.ref}` : `https://blockchain-certificate-verification-eta.vercel.app/verify/${data.ref}`} size={105} />
+          <div className="flex flex-col items-center rounded-xl border border-gray-100 bg-white p-2 shadow-sm">
+             <div className="certificate-qr border border-gray-100 p-1">
+                <QRCodeSVG
+                  value={typeof window !== 'undefined' ? `${window.location.origin}/verify/${data.ref}` : `https://blockchain-certificate-verification-eta.vercel.app/verify/${data.ref}`}
+                  size={105}
+                />
              </div>
-             <p className="text-[8px] mt-2 font-mono uppercase text-gray-400 tracking-tighter">Verify Authenticity</p>
+             <p className="mt-2 font-mono text-[8px] uppercase tracking-tighter text-gray-400">Verify Authenticity</p>
+          </div>
+        </div>
           </div>
         </div>
       </div>
@@ -485,8 +555,32 @@ export default function CertificatePage() {
       <style jsx global>{`
         @media print {
           @page { size: A4; margin: 0; }
-          body { background: white !important; -webkit-print-color-adjust: exact; }
-          .print\:hidden { display: none !important; }
+          body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .print\\:hidden { display: none !important; }
+          .certificate-scale-viewport {
+            max-width: none !important;
+            width: 100% !important;
+          }
+          .certificate-scale-clip {
+            width: auto !important;
+            height: auto !important;
+            overflow: visible !important;
+          }
+          .certificate-sheet {
+            position: relative !important;
+            left: auto !important;
+            top: auto !important;
+            transform: none !important;
+            width: 210mm !important;
+            height: 297mm !important;
+            max-width: none !important;
+            aspect-ratio: auto !important;
+            overflow: hidden !important;
+          }
+          .certificate-qr svg {
+            width: 105px !important;
+            height: 105px !important;
+          }
         }
       `}</style>
     </div>

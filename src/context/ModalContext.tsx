@@ -6,9 +6,17 @@ import { cn } from '@/lib/utils';
 
 type ModalType = 'success' | 'error' | 'info';
 
+interface ConfirmConfig {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
+}
+
 interface ModalContextType {
   showLoading: (state: boolean) => void;
   showAlert: (title: string, message: string, type: ModalType) => void;
+  showConfirm: (title: string, message: string, onConfirm: () => void) => void;
 }
 
 const ModalContext = createContext<ModalContextType | undefined>(undefined);
@@ -22,16 +30,32 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     type: 'info'
   });
 
+  const [confirmConfig, setConfirmConfig] = useState<ConfirmConfig>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
   const showLoading = (state: boolean) => setIsLoading(state);
 
   const showAlert = (title: string, message: string, type: ModalType) => {
+    setConfirmConfig((c) => (c.isOpen ? { ...c, isOpen: false } : c));
     setAlertConfig({ isOpen: true, title, message, type });
   };
 
   const closeAlert = () => setAlertConfig(prev => ({ ...prev, isOpen: false }));
 
+  const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setAlertConfig((a) => (a.isOpen ? { ...a, isOpen: false } : a));
+    setConfirmConfig({ isOpen: true, title, message, onConfirm });
+  };
+
+  const closeConfirm = () =>
+    setConfirmConfig((prev) => ({ ...prev, isOpen: false, onConfirm: () => {} }));
+
   return (
-    <ModalContext.Provider value={{ showLoading, showAlert }}>
+    <ModalContext.Provider value={{ showLoading, showAlert, showConfirm }}>
       {children}
 
       <AnimatePresence>
@@ -133,6 +157,68 @@ export function ModalProvider({ children }: { children: ReactNode }) {
               >
                 acknowledge.
               </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {confirmConfig.isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[115] flex items-center justify-center bg-[#020202]/70 backdrop-blur-sm p-4"
+            onClick={closeConfirm}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 20, opacity: 0 }}
+              transition={{ type: "spring", bounce: 0.5 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-md overflow-hidden rounded-[3rem] border-2 border-amber-500/40 bg-[#0A0A0A]/95 p-8 text-center shadow-[0_30px_100px_rgba(0,0,0,0.85)] backdrop-blur-3xl sm:p-10"
+            >
+              <div className="pointer-events-none absolute right-0 top-0 h-40 w-40 translate-x-10 -translate-y-10 rounded-full bg-amber-500/20 blur-[60px]" />
+
+              <motion.div
+                initial={{ scale: 0, rotate: -12 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", bounce: 0.5, delay: 0.05 }}
+                className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-amber-400/50 bg-amber-500/20 shadow-xl"
+              >
+                <AlertCircle className="h-9 w-9 text-amber-400" strokeWidth={2.5} />
+              </motion.div>
+
+              <h2 className="mb-3 text-2xl font-black lowercase tracking-tighter text-amber-400 sm:text-3xl">
+                {confirmConfig.title}.
+              </h2>
+              <p className="mb-8 text-sm font-bold lowercase leading-relaxed tracking-wide text-gray-400 sm:text-base">
+                {confirmConfig.message}
+              </p>
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={closeConfirm}
+                  className="w-full rounded-2xl border-2 border-white/15 bg-white/5 py-3.5 font-black lowercase tracking-tight text-white transition-colors hover:bg-white/10 sm:py-4"
+                >
+                  stay on page.
+                </motion.button>
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    const fn = confirmConfig.onConfirm;
+                    closeConfirm();
+                    fn();
+                  }}
+                  className="w-full rounded-2xl border-2 border-red-500/50 bg-red-500/20 py-3.5 font-black lowercase tracking-tight text-red-200 transition-colors hover:bg-red-500/30 sm:py-4"
+                >
+                  go back anyway.
+                </motion.button>
+              </div>
             </motion.div>
           </motion.div>
         )}

@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from 'react';
-import Sidebar from '@/components/Sidebar';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabaseClient';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
@@ -107,24 +106,18 @@ export default function ActivityLogTemplate({ title, subtitle, baseFilter, showT
   };
 
   return (
-    <div className="min-h-screen bg-[#020202] text-gray-200 flex font-sans selection:bg-cyan-500/30 overflow-hidden relative">
-      <Sidebar />
-
-      {/* Cyber Orbs */}
-      <div className="fixed top-[-10%] right-[-10%] w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[150px] pointer-events-none -z-10 mix-blend-screen" />
-      <div className="fixed bottom-0 left-[20%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[150px] pointer-events-none -z-10 mix-blend-screen" />
-
-      <main className="flex-1 p-12 overflow-y-auto relative z-10">
-        <header className="flex justify-between items-start mb-16 mt-4">
+    <main className="relative z-10 min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-12">
+        <header className="mb-10 mt-2 flex flex-col gap-6 sm:mb-12 sm:mt-4 lg:mb-16 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
           <motion.div 
             initial={{ opacity: 0, x: -30, filter: "blur(10px)" }} 
             animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
             transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
+            className="min-w-0"
           >
-            <h1 className="text-[3.5rem] font-black text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-gray-500 tracking-tighter leading-none mb-4 lowercase">
+            <h1 className="mb-3 text-3xl font-black lowercase leading-none tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-gray-500 sm:text-5xl lg:mb-4 lg:text-[3.5rem]">
               {title.toLowerCase()}.
             </h1>
-            <p className="text-cyan-400/80 font-bold tracking-[0.2em] uppercase text-xs">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-400/80 sm:text-xs">
               {"// "}{subtitle}
             </p>
           </motion.div>
@@ -133,13 +126,15 @@ export default function ActivityLogTemplate({ title, subtitle, baseFilter, showT
             initial={{ opacity: 0, scale: 0.5, rotate: -10 }} 
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
             transition={{ type: "spring", bounce: 0.6 }}
-            className="bg-[#0A0A0A]/80 backdrop-blur-xl border-2 border-white/5 rounded-full px-6 py-4 flex items-center space-x-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
+            className="shrink-0 self-start rounded-full border-2 border-white/5 bg-[#0A0A0A]/80 px-4 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.5)] backdrop-blur-xl sm:px-6 sm:py-4 lg:self-auto"
           >
+            <div className="flex items-center space-x-3 sm:space-x-4">
             <div className="relative flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500 shadow-[0_0_10px_rgba(34,211,238,1)]"></span>
             </div>
-            <span className="text-xs font-black text-gray-300 uppercase tracking-widest">Node: Active</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-gray-300 sm:text-xs">Node: Active</span>
+            </div>
           </motion.div>
         </header>
 
@@ -147,30 +142,30 @@ export default function ActivityLogTemplate({ title, subtitle, baseFilter, showT
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, type: "spring" }}
-          className="max-w-5xl bg-[#0A0A0A]/60 backdrop-blur-3xl rounded-[2.5rem] border-2 border-white/5 p-8 shadow-[0_20px_60px_rgba(0,0,0,0.5)] mb-10 relative overflow-hidden group"
+          className="relative mb-6 max-w-5xl overflow-hidden rounded-2xl border-2 border-white/5 bg-[#0A0A0A]/60 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.5)] backdrop-blur-3xl group sm:mb-10 sm:rounded-[2.5rem] sm:p-8"
         >
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 to-purple-500 opacity-50 group-hover:opacity-100 transition-opacity" />
           
-          <div className="flex flex-col md:flex-row justify-between gap-6">
-            <div className="relative flex-1 group/search">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-500 group-focus-within/search:text-cyan-400 transition-colors" />
+          <div className="flex flex-col gap-4 md:flex-row md:items-stretch md:justify-between md:gap-6">
+            <div className="relative min-w-0 flex-1 group/search">
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500 transition-colors group-focus-within/search:text-cyan-400 sm:left-6 sm:h-6 sm:w-6" />
               <input 
                 type="text" 
                 placeholder="search ledgers..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#020202]/80 border-2 border-white/10 text-white rounded-3xl py-5 pl-16 pr-6 focus:outline-none focus:border-cyan-400 focus:bg-white/5 transition-all placeholder-gray-600 font-black tracking-tight text-lg lowercase shadow-inner"
+                className="w-full rounded-2xl border-2 border-white/10 bg-[#020202]/80 py-4 pl-12 pr-4 text-base font-black lowercase tracking-tight text-white shadow-inner outline-none transition-all placeholder:text-gray-600 focus:border-cyan-400 focus:bg-white/5 sm:rounded-3xl sm:py-5 sm:pl-16 sm:pr-6 sm:text-lg"
               />
             </div>
             
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
               {showTypeFilter && (
-                <div className="relative group/filter">
-                  <ListFilter className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within/filter:text-cyan-400 transition-colors pointer-events-none" />
+                <div className="relative min-w-0 flex-1 group/filter sm:min-w-[10rem] sm:flex-initial">
+                  <ListFilter className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500 transition-colors group-focus-within/filter:text-cyan-400 sm:left-5" />
                   <select 
                     value={typeFilter}
                     onChange={(e) => setTypeFilter(e.target.value)}
-                    className="bg-[#020202]/80 border-2 border-white/10 text-white font-black tracking-tight rounded-3xl pl-12 pr-6 py-5 focus:outline-none focus:border-cyan-400 appearance-none cursor-pointer hover:bg-white/5 transition-all shadow-inner lowercase"
+                    className="w-full cursor-pointer appearance-none rounded-2xl border-2 border-white/10 bg-[#020202]/80 py-4 pl-11 pr-4 text-base font-black lowercase tracking-tight text-white shadow-inner outline-none transition-all hover:bg-white/5 focus:border-cyan-400 sm:rounded-3xl sm:py-5 sm:pl-12 sm:pr-6 sm:text-lg"
                   >
                     <option value="All">all types</option>
                     <option value="Saved">anchored</option>
@@ -178,12 +173,12 @@ export default function ActivityLogTemplate({ title, subtitle, baseFilter, showT
                   </select>
                 </div>
               )}
-              <div className="relative group/sort">
-                <Clock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within/sort:text-cyan-400 transition-colors pointer-events-none" />
+              <div className="relative min-w-0 flex-1 group/sort sm:min-w-[9rem] sm:flex-initial">
+                <Clock className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500 transition-colors group-focus-within/sort:text-cyan-400 sm:left-5" />
                 <select 
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value)}
-                  className="bg-[#020202]/80 border-2 border-white/10 text-white font-black tracking-tight rounded-3xl pl-12 pr-6 py-5 focus:outline-none focus:border-cyan-400 appearance-none cursor-pointer hover:bg-white/5 transition-all shadow-inner lowercase"
+                  className="w-full cursor-pointer appearance-none rounded-2xl border-2 border-white/10 bg-[#020202]/80 py-4 pl-11 pr-4 text-base font-black lowercase tracking-tight text-white shadow-inner outline-none transition-all hover:bg-white/5 focus:border-cyan-400 sm:rounded-3xl sm:py-5 sm:pl-12 sm:pr-6 sm:text-lg"
                 >
                   <option value="Newest">newest</option>
                   <option value="Oldest">oldest</option>
@@ -197,14 +192,14 @@ export default function ActivityLogTemplate({ title, subtitle, baseFilter, showT
           variants={containerVariants}
           initial="hidden"
           animate="show"
-          className="max-w-5xl space-y-5"
+          className="max-w-5xl space-y-4 sm:space-y-5"
         >
           <AnimatePresence>
             {isLoading ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="text-center py-20 bg-[#0A0A0A]/40 backdrop-blur-md rounded-[3rem] border-2 border-white/5 border-dashed"
+                className="text-center py-16 sm:py-20 bg-[#0A0A0A]/40 backdrop-blur-md rounded-[2rem] border-2 border-white/5 border-dashed sm:rounded-[3rem]"
               >
                 <div className="flex flex-col items-center gap-4 text-cyan-400 uppercase tracking-[0.2em] text-xs">
                   <Loader2 className="w-7 h-7 animate-spin" />
@@ -215,7 +210,7 @@ export default function ActivityLogTemplate({ title, subtitle, baseFilter, showT
               <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="text-center text-gray-500 py-20 bg-[#0A0A0A]/40 backdrop-blur-md rounded-[3rem] border-2 border-white/5 border-dashed font-black uppercase tracking-[0.3em] text-xs"
+                className="rounded-[2rem] border-2 border-dashed border-white/5 bg-[#0A0A0A]/40 py-16 text-center text-xs font-black uppercase tracking-[0.3em] text-gray-500 backdrop-blur-md sm:rounded-[3rem] sm:py-20"
               >
                 no matching records located in ledger
               </motion.div>
@@ -229,7 +224,7 @@ export default function ActivityLogTemplate({ title, subtitle, baseFilter, showT
                   layout
                   onClick={() => target && router.push(target)}
                   className={cn(
-                    "group flex flex-col md:flex-row justify-between items-start md:items-center p-8 bg-[#0A0A0A]/80 backdrop-blur-xl rounded-[2rem] border-2 transition-all duration-300 relative overflow-hidden",
+                    "group relative flex flex-col items-start justify-between gap-4 overflow-hidden rounded-2xl border-2 bg-[#0A0A0A]/80 p-5 backdrop-blur-xl transition-all duration-300 sm:rounded-[2rem] sm:p-8 md:flex-row md:items-center",
                     target ? 'cursor-pointer hover:border-cyan-400 hover:shadow-[0_20px_40px_rgba(34,211,238,0.1)] border-white/10' : 'border-white/5'
                   )}
                 >
@@ -237,18 +232,18 @@ export default function ActivityLogTemplate({ title, subtitle, baseFilter, showT
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/0 via-cyan-400/5 to-cyan-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
                   )}
                   
-                  <div className="relative z-10 flex-1 pr-8">
-                    <div className="flex items-center space-x-4 mb-2">
-                      <span className="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,1)]" />
-                      <h3 className="text-xl font-black text-white tracking-tight lowercase">{activity.action}</h3>
+                  <div className="relative z-10 min-w-0 flex-1 pr-0 md:pr-8">
+                    <div className="mb-2 flex flex-wrap items-center gap-3">
+                      <span className="h-3 w-3 shrink-0 rounded-full bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,1)]" />
+                      <h3 className="text-lg font-black lowercase tracking-tight text-white sm:text-xl">{activity.action}</h3>
                     </div>
-                    <p className="text-base text-gray-400 font-medium pl-7 leading-relaxed">{activity.details}</p>
+                    <p className="pl-0 text-sm font-medium leading-relaxed text-gray-400 sm:pl-7 sm:text-base">{activity.details}</p>
                   </div>
 
-                  <div className="mt-6 md:mt-0 flex items-center space-x-6 relative z-10">
-                    <div className="text-[10px] text-cyan-400 font-black tracking-[0.2em] uppercase bg-cyan-500/10 px-5 py-3 rounded-xl border-2 border-cyan-500/20 shadow-inner flex flex-col items-end">
-                      <span className="text-gray-500 mb-1">TIMESTAMP</span>
-                      <span>{new Date(activity.timestamp).toLocaleString()}</span>
+                  <div className="relative z-10 flex w-full shrink-0 flex-wrap items-center gap-4 md:mt-0 md:w-auto md:justify-end">
+                    <div className="flex flex-col items-start rounded-xl border-2 border-cyan-500/20 bg-cyan-500/10 px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400 shadow-inner sm:items-end sm:px-5 sm:py-3">
+                      <span className="mb-1 text-gray-500">TIMESTAMP</span>
+                      <span className="break-all text-left sm:text-right">{new Date(activity.timestamp).toLocaleString()}</span>
                     </div>
                     {target && (
                       <div className="w-12 h-12 rounded-2xl bg-white/5 border-2 border-white/10 flex items-center justify-center group-hover:bg-cyan-400 group-hover:text-black transition-colors duration-300">
@@ -263,6 +258,5 @@ export default function ActivityLogTemplate({ title, subtitle, baseFilter, showT
           </AnimatePresence>
         </motion.div>
       </main>
-    </div>
   );
 }

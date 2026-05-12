@@ -5,7 +5,11 @@ import { motion } from 'framer-motion';
 import { Home, LayoutList, Award, ScrollText, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function Sidebar() {
+type SidebarProps = {
+  onNavigate?: () => void;
+};
+
+export default function Sidebar({ onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -17,19 +21,23 @@ export default function Sidebar() {
   ];
 
   const handleLogout = async () => {
+    onNavigate?.();
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/login');
   };
 
   return (
-    <aside className="w-72 bg-[#020202]/60 backdrop-blur-3xl border-r border-white/5 flex flex-col p-6 z-50">
+    <aside
+      id="dashboard-sidebar"
+      className="flex h-full min-h-screen w-full max-w-[18rem] flex-col border-r border-white/5 bg-[#020202]/95 p-4 backdrop-blur-3xl sm:p-6 lg:min-h-0 lg:w-72 lg:max-w-none lg:bg-[#020202]/60"
+    >
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", bounce: 0.5 }}
-        className="mb-12 px-4 pt-4"
+        className="mb-8 px-2 pt-2 sm:mb-12 sm:px-4 sm:pt-4"
       >
-        <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-500 to-purple-500 tracking-tighter lowercase">
+        <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-500 to-purple-500 tracking-tighter lowercase sm:text-3xl">
           miu verify.
         </h2>
         <div className="h-1.5 w-12 bg-gradient-to-r from-cyan-400 to-purple-600 rounded-full mt-2 shadow-[0_0_15px_rgba(34,211,238,0.5)]" />
@@ -49,6 +57,7 @@ export default function Sidebar() {
             >
               <Link
                 href={item.href}
+                onClick={() => onNavigate?.()}
                 className={cn(
                   "group relative flex items-center space-x-4 px-5 py-4 rounded-2xl transition-all text-base font-bold overflow-hidden lowercase tracking-wide",
                   isActive ? "text-white" : "text-gray-500 hover:text-white"

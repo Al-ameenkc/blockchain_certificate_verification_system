@@ -4,7 +4,7 @@ import Sidebar from '@/components/Sidebar';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabaseClient';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
-import { Search, Clock, ListFilter, ArrowRight } from 'lucide-react';
+import { Search, Clock, ListFilter, ArrowRight, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface Activity {
@@ -13,6 +13,25 @@ export interface Activity {
   details: string;
   timestamp: string;
   url?: string;
+}
+
+function resolveActivityTarget(activity: Activity): string | null {
+  if (activity.url) {
+    try {
+      if (activity.url.startsWith("http")) {
+        const u = new URL(activity.url);
+        return `${u.pathname}${u.search}`;
+      }
+      return activity.url;
+    } catch {
+      return activity.url;
+    }
+  }
+  const refMatch = activity.details.match(/ref\s+(MIU-[A-Za-z0-9]+)/i);
+  if (refMatch) {
+    return `/certificate/${encodeURIComponent(refMatch[1])}`;
+  }
+  return null;
 }
 
 interface ActivityLogTemplateProps {
@@ -24,6 +43,7 @@ interface ActivityLogTemplateProps {
 
 export default function ActivityLogTemplate({ title, subtitle, baseFilter, showTypeFilter = true }: ActivityLogTemplateProps) {
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
   const [sortOrder, setSortOrder] = useState("Newest");
@@ -32,9 +52,11 @@ export default function ActivityLogTemplate({ title, subtitle, baseFilter, showT
   useEffect(() => {
     const fetchLog = async () => {
       try {
+        setIsLoading(true);
         const { data, error } = await supabase.from('activities').select('*');
         if (data && data.length > 0 && !error) {
           setActivities(data);
+          setIsLoading(false);
           return;
         }
       } catch (e) {
@@ -46,6 +68,7 @@ export default function ActivityLogTemplate({ title, subtitle, baseFilter, showT
       if (loaded) {
         setActivities(JSON.parse(loaded));
       }
+      setIsLoading(false);
     };
     fetchLog();
   }, []);
@@ -177,7 +200,18 @@ export default function ActivityLogTemplate({ title, subtitle, baseFilter, showT
           className="max-w-5xl space-y-5"
         >
           <AnimatePresence>
-            {filteredActivities.length === 0 ? (
+            {isLoading ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center py-20 bg-[#0A0A0A]/40 backdrop-blur-md rounded-[3rem] border-2 border-white/5 border-dashed"
+              >
+                <div className="flex flex-col items-center gap-4 text-cyan-400 uppercase tracking-[0.2em] text-xs">
+                  <Loader2 className="w-7 h-7 animate-spin" />
+                  <span>loading records from database...</span>
+                </div>
+              </motion.div>
+            ) : filteredActivities.length === 0 ? (
               <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -186,18 +220,20 @@ export default function ActivityLogTemplate({ title, subtitle, baseFilter, showT
                 no matching records located in ledger
               </motion.div>
             ) : (
-              filteredActivities.map((activity) => (
+              filteredActivities.map((activity) => {
+                const target = resolveActivityTarget(activity);
+                return (
                 <motion.div 
                   key={activity.id}
                   variants={itemVariants}
                   layout
-                  onClick={() => activity.url && router.push(activity.url)}
+                  onClick={() => target && router.push(target)}
                   className={cn(
                     "group flex flex-col md:flex-row justify-between items-start md:items-center p-8 bg-[#0A0A0A]/80 backdrop-blur-xl rounded-[2rem] border-2 transition-all duration-300 relative overflow-hidden",
-                    activity.url ? 'cursor-pointer hover:border-cyan-400 hover:shadow-[0_20px_40px_rgba(34,211,238,0.1)] border-white/10' : 'border-white/5'
+                    target ? 'cursor-pointer hover:border-cyan-400 hover:shadow-[0_20px_40px_rgba(34,211,238,0.1)] border-white/10' : 'border-white/5'
                   )}
                 >
-                  {activity.url && (
+                  {target && (
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/0 via-cyan-400/5 to-cyan-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 pointer-events-none" />
                   )}
                   
@@ -214,14 +250,15 @@ export default function ActivityLogTemplate({ title, subtitle, baseFilter, showT
                       <span className="text-gray-500 mb-1">TIMESTAMP</span>
                       <span>{new Date(activity.timestamp).toLocaleString()}</span>
                     </div>
-                    {activity.url && (
+                    {target && (
                       <div className="w-12 h-12 rounded-2xl bg-white/5 border-2 border-white/10 flex items-center justify-center group-hover:bg-cyan-400 group-hover:text-black transition-colors duration-300">
                         <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" strokeWidth={3} />
                       </div>
                     )}
                   </div>
                 </motion.div>
-              ))
+              );
+              })
             )}
           </AnimatePresence>
         </motion.div>

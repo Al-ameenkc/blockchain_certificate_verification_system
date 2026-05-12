@@ -1,8 +1,7 @@
 "use client";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { useRouter } from 'next/navigation';
-import { ethers } from 'ethers';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ScrollText, ArrowLeft, ChevronDown, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -31,6 +30,10 @@ const HONOURS_CLASSES = [
   "Third Class Honours",
   "Pass"
 ];
+
+const REFERENCE_CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const REFERENCE_LENGTH = 10;
+const REFERENCE_PREFIX = 'MIU-';
 
 const FuturisticDropdown = ({ 
   label, 
@@ -140,110 +143,67 @@ export default function Dashboard() {
 
   const { showLoading, showAlert } = useModal();
 
+  useEffect(() => {
+    if (view === 'issue') {
+      const today = new Date().toISOString().split('T')[0];
+      setFormData((prev) => ({ ...prev, date: today }));
+    }
+  }, [view]);
+
+  const generateReference = () => {
+    let value = '';
+    for (let i = 0; i < REFERENCE_LENGTH; i += 1) {
+      value += REFERENCE_CHARSET[Math.floor(Math.random() * REFERENCE_CHARSET.length)];
+    }
+    return `${REFERENCE_PREFIX}${value}`;
+  };
+
+  const generateUniqueReference = async () => {
+    const maxAttempts = 20;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const candidate = generateReference();
+      const { count, error } = await supabase
+        .from('certificates')
+        .select('reference_id', { count: 'exact', head: true })
+        .eq('reference_id', candidate);
+
+      if (error) {
+        // If Supabase is temporarily unreachable, keep flow moving and re-validate before final submit.
+        if (typeof error.message === 'string' && error.message.toLowerCase().includes('failed to fetch')) {
+          return candidate;
+        }
+        throw new Error(error.message || 'Unable to validate unique reference number.');
+      }
+
+      if ((count ?? 0) === 0) {
+        return candidate;
+      }
+    }
+
+    throw new Error('Failed to generate a unique reference number. Please try again.');
+  };
+
   const handleCommit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const certRef = `MIU-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+    showLoading(true);
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (typeof window !== 'undefined' && (window as any).ethereum) {
-        // Request account access if needed
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
-        
-        // Ensure network is Sepolia Testnet (chainId: 0xaa36a7)
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (window as any).ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: '0xaa36a7' }],
-          });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (switchError: any) {
-          console.error("Failed to switch to Sepolia Testnet", switchError);
-          showAlert("Network Error", "Please switch your MetaMask network to the Sepolia Testnet.", "error");
-          return;
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const provider = new ethers.BrowserProvider((window as any).ethereum);
-        const signer = await provider.getSigner();
-
-        const contractAddress = localStorage.getItem('contract_address') || process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0x5FbDB2315678afecb367f032d93F642f64180aa3";
-        
-        const abi = [
-          "function issueCertificate(string _ref, string _name, string _matricNumber, string _department, string _classOfDegree, string _date) public"
-        ];
-        const contract = new ethers.Contract(contractAddress, abi, signer);
-        
-        try {
-          showLoading(true);
-          const tx = await contract.issueCertificate(
-            certRef, formData.studentName, formData.matricNumber, formData.department, formData.classOfDegree, formData.date
-          );
-          await tx.wait();
-
-          // Save to Supabase Certificates Table
-          const { error: supabaseError } = await supabase.from('certificates').insert([
-            {
-              reference_id: certRef,
-              student_name: formData.studentName,
-              matric_number: formData.matricNumber,
-              department: formData.department,
-              class_of_degree: formData.classOfDegree,
-              date_issued: formData.date,
-              action_type: view
-            }
-          ]);
-          
-          if (supabaseError) {
-            console.error("Supabase insert failed:", supabaseError);
-            const isNetworkFailure =
-              typeof supabaseError.message === 'string' &&
-              supabaseError.message.toLowerCase().includes('failed to fetch');
-
-            showLoading(false);
-            showAlert(
-              "Database Sync Failed",
-              isNetworkFailure
-                ? "Certificate was written on-chain, but we could not reach Supabase. Check your NEXT_PUBLIC_SUPABASE_URL value, internet connection, and whether your Supabase project is active."
-                : `Certificate was written on-chain, but database sync failed: ${supabaseError.message}`,
-              "error"
-            );
-            return;
-          }
-
-          showLoading(false);
-          showAlert("Transaction Successful", "Certificate has been cryptographically anchored to the blockchain and synced to the database.", "success");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch(contractErr: any) {
-          showLoading(false);
-          console.error("Contract write rejected or failed.", contractErr);
-          if (contractErr.code === 'ACTION_REJECTED') {
-            showAlert("Transaction Cancelled", "Transaction was cancelled by the user.", "info");
-          } else {
-            showAlert("Transaction Failed", "Ensure you are connected to the Sepolia testnet and have enough ETH to pay for gas.", "error");
-          }
-          return;
-        }
-      } else {
-        showAlert("Wallet Missing", "MetaMask (or a compatible Web3 wallet) is required to issue certificates on the Ethereum network! Please install it.", "error");
-        return;
-      }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch(err: any) {
-      console.error("Ethereum Wallet Connection Failed:", err);
-      if (err.code === 4001) {
-        showAlert("Connection Cancelled", "Wallet connection was cancelled by the user.", "info");
-      } else {
-        showAlert("Connection Failed", "Ethereum Wallet Connection Failed. Please unlock MetaMask and try again.", "error");
-      }
+      const certRef = await generateUniqueReference();
+      showLoading(false);
+      showAlert(
+        "Certificate Draft Ready",
+        "Reference generated. Review the certificate and click Submit on the certificate page to write to blockchain.",
+        "info"
+      );
+      router.push(`/certificate/${certRef}?name=${formData.studentName}&matric=${formData.matricNumber}&dept=${formData.department}&class=${formData.classOfDegree}&date=${formData.date}&viewType=${view}`);
+      return;
+    } catch (err) {
+      showLoading(false);
+      console.error("Reference generation failed:", err);
+      showAlert("Reference Error", "Unable to generate a unique certificate reference right now. Please try again.", "error");
       return;
     }
-    
-    // Wait for the alert to be acknowledged or just push right away.
-    // In our case, push immediately, but the modal context will stay open on top!
-    router.push(`/certificate/${certRef}?name=${formData.studentName}&matric=${formData.matricNumber}&dept=${formData.department}&class=${formData.classOfDegree}&date=${formData.date}&viewType=${view}`);
   };
 
 
@@ -401,6 +361,8 @@ export default function Dashboard() {
                         className="w-full px-6 py-5 bg-[#020202]/80 border-2 border-white/10 rounded-2xl focus:border-cyan-400 focus:bg-white/5 outline-none text-white transition-all text-xl font-black tracking-tight shadow-inner"
                         style={{ colorScheme: 'dark' }}
                         value={formData.date}
+                        readOnly={view === 'issue'}
+                        disabled={view === 'issue'}
                         onChange={(e) => setFormData({...formData, date: e.target.value})}
                         required
                       />
@@ -416,9 +378,9 @@ export default function Dashboard() {
                     >
                       <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
                       <CheckCircle2 className="w-8 h-8 text-black" strokeWidth={3} />
-                      <span>{view === 'issue' ? 'anchor to chain.' : 'register legacy.'}</span>
+                      <span>{view === 'issue' ? 'create certificate.' : 'prepare legacy certificate.'}</span>
                     </motion.button>
-                    <p className="text-center text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mt-6">tx signed via metamask</p>
+                    <p className="text-center text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mt-6">blockchain submit happens on certificate page</p>
                   </div>
                 </form>
               </div>

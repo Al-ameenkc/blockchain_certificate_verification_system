@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chapter 4.2 — System Menus Implementation &amp; Technology Stack</title>
+    <style>
+      :root {
+        --bg: #f7f7fb;
+        --card: #ffffff;
+        --text: #1a1a1f;
+        --muted: #5c5c66;
+        --border: #e3e3ea;
+        --accent: #0f766e;
+      }
+      body {
+        margin: 0;
+        font-family: "Times New Roman", Times, serif;
+        font-size: 12pt;
+        line-height: 1.55;
+        color: var(--text);
+        background: var(--bg);
+      }
+      header {
+        padding: 2rem 1.25rem 1rem;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      header h1 {
+        font-size: 14pt;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        text-align: center;
+        margin: 0 0 0.35rem;
+      }
+      header .sub {
+        text-align: center;
+        font-size: 12pt;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin: 0;
+      }
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 1.25rem 3rem;
+      }
+      section {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1.25rem 1.35rem;
+        margin-bottom: 1rem;
+      }
+      h2 {
+        font-size: 13pt;
+        margin: 0 0 0.65rem;
+        color: var(--accent);
+      }
+      h3 {
+        font-size: 12pt;
+        margin: 1rem 0 0.45rem;
+      }
+      p {
+        margin: 0 0 0.65rem;
+        text-align: justify;
+      }
+      ul {
+        margin: 0 0 0.65rem;
+        padding-left: 1.25rem;
+      }
+      li {
+        margin-bottom: 0.35rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11pt;
+        margin: 0.5rem 0 0.75rem;
+      }
+      th,
+      td {
+        border: 1px solid var(--border);
+        padding: 0.45rem 0.55rem;
+        vertical-align: top;
+        text-align: left;
+      }
+      th {
+        background: #eef7f6;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 10.5pt;
+        background: #f0f0f5;
+        padding: 0.06rem 0.28rem;
+        border-radius: 3px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 11pt;
+      }
+      @media print {
+        body {
+          background: #fff;
+        }
+        section {
+          border: 1px solid #ccc;
+          page-break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Chapter Four — Implementation and Discussion</h1>
+      <p class="sub">4.2 System Menus Implementation (Frontend)</p>
+      <p class="muted" style="text-align: center; margin-top: 0.75rem">
+        Paste into your report or print to PDF. Version pins reflect
+        <code>package.json</code> at implementation time.
+      </p>
+    </header>
+
+    <main>
+      <section>
+        <h2>4.2 System Menus Implementation</h2>
+        <p>
+          The administrative frontend is organised around a persistent <strong>sidebar menu</strong>
+          (<strong>Home</strong>, <strong>Records</strong>, <strong>Issued</strong>,
+          <strong>Registered</strong>) plus <strong>Logout</strong>, routing to
+          <code>/dashboard</code>, <code>/dashboard/record</code>,
+          <code>/dashboard/issued</code>, and <code>/dashboard/registered</code> respectively. The
+          <strong>Home</strong> view implements the dual workflows <em>issue</em> and
+          <em>register legacy</em> certificate preparation before navigation to
+          <code>/certificate/[ref]</code> for preview and blockchain submission. Public verification is
+          exposed at <code>/verify</code> and <code>/verify/[ref]</code> without the sidebar. Entry and
+          session boundaries use <code>/login</code>, Next.js <strong>middleware</strong>, and a
+          server-issued session cookie for protected routes.
+        </p>
+      </section>
+
+      <section>
+        <h2>4.2.1 Technology stack (documentation module)</h2>
+        <p>
+          The tables below list the principal technologies used to implement the user interfaces and
+          closely coupled client-side behaviour (wallet submission, RPC reads). Tooling used only at
+          build or deploy time appears under development tooling.
+        </p>
+
+        <h3>Core application (dependencies)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Technology</th>
+              <th>Version (manifest)</th>
+              <th>Role in the frontend / app</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Next.js</td>
+              <td>16.2.1</td>
+              <td>App Router, pages, middleware integration, API route handlers for admin login.</td>
+            </tr>
+            <tr>
+              <td>React</td>
+              <td>19.2.4</td>
+              <td>UI components and client-side state for forms, verification, and dashboard views.</td>
+            </tr>
+            <tr>
+              <td>React DOM</td>
+              <td>19.2.4</td>
+              <td>DOM rendering for client components.</td>
+            </tr>
+            <tr>
+              <td>TypeScript</td>
+              <td>^5 (toolchain)</td>
+              <td>Typed JavaScript across components and libraries.</td>
+            </tr>
+            <tr>
+              <td>Tailwind CSS</td>
+              <td>^4</td>
+              <td>Utility-first styling and responsive layout.</td>
+            </tr>
+            <tr>
+              <td>@tailwindcss/postcss</td>
+              <td>^4</td>
+              <td>PostCSS pipeline for Tailwind v4.</td>
+            </tr>
+            <tr>
+              <td>ethers</td>
+              <td>^6.16.0</td>
+              <td>Contract interaction and JSON-RPC reads/writes from the browser.</td>
+            </tr>
+            <tr>
+              <td>@supabase/supabase-js</td>
+              <td>^2.103.3</td>
+              <td>Client access to Supabase for mirrored certificates and activity logs.</td>
+            </tr>
+            <tr>
+              <td>framer-motion</td>
+              <td>^12.38.0</td>
+              <td>Motion and transitions on key screens.</td>
+            </tr>
+            <tr>
+              <td>lucide-react</td>
+              <td>^1.8.0</td>
+              <td>Icon set for menus and actions.</td>
+            </tr>
+            <tr>
+              <td>qrcode.react</td>
+              <td>^4.2.0</td>
+              <td>QR rendering on the certificate view.</td>
+            </tr>
+            <tr>
+              <td>clsx</td>
+              <td>^2.1.1</td>
+              <td>Conditional CSS class names.</td>
+            </tr>
+            <tr>
+              <td>tailwind-merge</td>
+              <td>^3.5.0</td>
+              <td>Merging Tailwind classes without conflicts.</td>
+            </tr>
+            <tr>
+              <td>dotenv</td>
+              <td>^17.3.1</td>
+              <td>Environment loading where referenced by tooling/configuration.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Development and smart-contract tooling (devDependencies)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Technology</th>
+              <th>Version (manifest)</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Hardhat</td>
+              <td>^2.28.6</td>
+              <td>Solidity compile, network config, deployment scripts.</td>
+            </tr>
+            <tr>
+              <td>@nomicfoundation/hardhat-toolbox</td>
+              <td>^6.1.2</td>
+              <td>Hardhat tasks, testing, and TypeChain integration.</td>
+            </tr>
+            <tr>
+              <td>Solidity (compiler)</td>
+              <td>0.8.20 (Hardhat config)</td>
+              <td>Smart contract language for <code>CertificateRegistry</code>.</td>
+            </tr>
+            <tr>
+              <td>ESLint</td>
+              <td>^9</td>
+              <td>Linting.</td>
+            </tr>
+            <tr>
+              <td>eslint-config-next</td>
+              <td>16.2.1</td>
+              <td>Next.js-aligned ESLint rules.</td>
+            </tr>
+            <tr>
+              <td>babel-plugin-react-compiler</td>
+              <td>1.0.0</td>
+              <td>React compiler plugin as configured in the project.</td>
+            </tr>
+            <tr>
+              <td>@types/node, @types/react, @types/react-dom</td>
+              <td>^20 / ^19</td>
+              <td>TypeScript typings.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Runtime environment (not npm packages)</h3>
+        <ul>
+          <li>
+            <strong>Node.js</strong> — LTS recommended for <code>next dev</code>,
+            <code>next build</code>, and Hardhat CLI.
+          </li>
+          <li>
+            <strong>Modern browser</strong> — e.g. Chromium-based; <strong>MetaMask</strong> (or
+            compatible <code>window.ethereum</code> wallet) for signing issuance transactions on the
+            configured EVM test network (e.g. Sepolia).
+          </li>
+          <li>
+            <strong>JSON-RPC provider</strong> — HTTPS endpoint for Sepolia (or local chain) as set in
+            environment variables for reads and deployment.
+          </li>
+          <li>
+            <strong>Supabase project</strong> — hosted PostgreSQL and API for optional mirrored data and
+            activity lists when online.
+          </li>
+        </ul>
+
+        <p class="muted">
+          When upgrading dependencies, update this document together with <code>package.json</code> so
+          the thesis appendix stays aligned with the repository.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

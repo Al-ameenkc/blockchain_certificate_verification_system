@@ -6,7 +6,7 @@ export default function IssuedCerts() {
     <ActivityLogTemplate 
       title="Issued Certificates"
       subtitle="Audit log of issued assets natively minted on the network"
-      baseFilter={(a) => !a.action.includes('Registered')}
+      baseFilter={(a) => a.action.startsWith('Issued Certificate') && !a.action.includes('(Draft)')}
     />
   );
 }

@@ -1,92 +1,106 @@
 "use client";
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { ethers } from 'ethers';
 import { motion, Variants } from 'framer-motion';
 import { CheckCircle2, XCircle, Loader2, ArrowLeft, ShieldCheck, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  readCertificateOnChainDirect,
+  normalizeCertificateRef,
+} from '@/lib/readCertificateOnChain';
 
 export default function VerifyCertificate() {
   const params = useParams();
   const router = useRouter();
-  const ref = params.ref as string;
+  const ref = normalizeCertificateRef(params.ref as string | string[] | undefined);
   const [status, setStatus] = useState<'loading' | 'verified' | 'failed'>('loading');
+  const [failureReason, setFailureReason] = useState<'missing_ref' | 'not_on_chain'>('not_on_chain');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [certData, setCertData] = useState<any>(null);
 
   useEffect(() => {
     const fetchCertificate = async () => {
-      let isVerifiedOnChain = false;
-      let certDetails = null;
+      if (!ref) {
+        setFailureReason('missing_ref');
+        setStatus('failed');
+        return;
+      }
 
       try {
-        let rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || "http://127.0.0.1:8545";
-        let contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0x5FbDB2315678afecb367f032d93F642f64180aa3";
-        
-        if (typeof window !== 'undefined') {
-            const lRpc = localStorage.getItem('rpc_url');
-            const lAddr = localStorage.getItem('contract_address');
-            if (lRpc) rpcUrl = lRpc;
-            if (lAddr) contractAddress = lAddr;
-        }
-
-        const provider = new ethers.JsonRpcProvider(rpcUrl);
-        const abi = [
-          "function verifyCertificate(string _ref) public view returns (tuple(string name, string matricNumber, string department, string classOfDegree, string date, bool isRegistered, address issuer))"
-        ];
-        
-        const contract = new ethers.Contract(contractAddress, abi, provider);
-        const data = await contract.verifyCertificate(ref);
-        
-        if (data && data.isRegistered) {
-          certDetails = {
-            name: data.name,
-            matricNumber: data.matricNumber,
-            department: data.department,
-            classOfDegree: data.classOfDegree,
-            date: data.date,
-            issuer: data.issuer
-          };
-          isVerifiedOnChain = true;
-        }
-      } catch {
-        console.warn("Blockchain verification failed or contract not found. Falling back to Supabase database...");
-      }
-
-      // Supabase Fallback
-      if (!isVerifiedOnChain) {
+        const res = await fetch(
+          `/api/certificate/onchain?ref=${encodeURIComponent(ref)}`,
+          { cache: 'no-store' }
+        );
+        let body: { found?: boolean; certificate?: { isRegistered?: boolean; name: string; matricNumber: string; department: string; classOfDegree: string; date: string; issuer: string } } = {};
         try {
-          const { supabase } = await import('@/utils/supabaseClient');
-          const { data, error } = await supabase
-            .from('certificates')
-            .select('*')
-            .eq('reference_id', ref)
-            .single();
-
-          if (data && !error) {
-            certDetails = {
-              name: data.student_name,
-              matricNumber: data.matric_number,
-              department: data.department,
-              classOfDegree: data.class_of_degree,
-              date: data.date_issued,
-              issuer: "Supabase Database Registry (Fallback)"
-            };
-            isVerifiedOnChain = true;
-          }
-        } catch (dbErr) {
-          console.error("Supabase fallback failed:", dbErr);
+          body = (await res.json()) as typeof body;
+        } catch {
+          body = {};
         }
-      }
 
-      if (isVerifiedOnChain && certDetails) {
-        setCertData(certDetails);
-        setStatus('verified');
-      } else {
+        if (!res.ok) {
+          setFailureReason('not_on_chain');
+          setStatus('failed');
+          return;
+        }
+
+        if (body.found && body.certificate?.isRegistered) {
+          const c = body.certificate;
+          setCertData({
+            name: c.name,
+            matricNumber: c.matricNumber,
+            department: c.department,
+            classOfDegree: c.classOfDegree,
+            date: c.date,
+            issuer: c.issuer,
+          });
+          setStatus('verified');
+          return;
+        }
+
+        try {
+          const row = await readCertificateOnChainDirect(ref);
+          if (row?.isRegistered) {
+            setCertData({
+              name: row.name,
+              matricNumber: row.matricNumber,
+              department: row.department,
+              classOfDegree: row.classOfDegree,
+              date: row.date,
+              issuer: row.issuer,
+            });
+            setStatus('verified');
+            return;
+          }
+        } catch {
+          // treat as not found
+        }
+
+        setFailureReason('not_on_chain');
+        setStatus('failed');
+      } catch {
+        try {
+          const row = await readCertificateOnChainDirect(ref);
+          if (row?.isRegistered) {
+            setCertData({
+              name: row.name,
+              matricNumber: row.matricNumber,
+              department: row.department,
+              classOfDegree: row.classOfDegree,
+              date: row.date,
+              issuer: row.issuer,
+            });
+            setStatus('verified');
+            return;
+          }
+        } catch {
+          // fall through
+        }
+        setFailureReason('not_on_chain');
         setStatus('failed');
       }
     };
-    
+
     fetchCertificate();
   }, [ref]);
 
@@ -111,6 +125,11 @@ export default function VerifyCertificate() {
     visible: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 300, damping: 20 } }
   };
 
+  const failSubtitle =
+    failureReason === 'missing_ref'
+      ? 'invalid reference number.'
+      : 'certificate not found on the blockchain.';
+
   return (
     <div className="min-h-screen bg-[#020202] flex flex-col items-center justify-center p-4 font-sans text-white relative selection:bg-cyan-500/30 overflow-hidden">
       {/* Intense Background Glows */}
@@ -124,11 +143,11 @@ export default function VerifyCertificate() {
         className="absolute top-8 left-8 z-20"
       >
         <button 
-          onClick={() => router.push('/login')} 
+          onClick={() => router.push('/verify')} 
           className="text-cyan-400 hover:text-white transition-colors text-xs font-black tracking-[0.2em] uppercase flex items-center space-x-3 bg-cyan-500/10 px-6 py-3 rounded-full hover:bg-cyan-500/20"
         >
           <ArrowLeft className="w-5 h-5" />
-          <span>portal home</span>
+          <span>check another reference</span>
         </button>
       </motion.div>
 
@@ -171,7 +190,7 @@ export default function VerifyCertificate() {
         
         <motion.div variants={itemVariants} className="bg-black/60 py-4 px-6 rounded-2xl border-2 border-white/5 mb-10 max-w-[85%] mx-auto shadow-inner relative overflow-hidden">
            <div className="absolute top-0 left-0 w-1 h-full bg-cyan-400" />
-           <span className="text-cyan-400 font-mono text-lg font-black tracking-widest uppercase">{ref}</span>
+           <span className="text-cyan-400 font-mono text-lg font-black tracking-widest uppercase">{ref || '—'}</span>
         </motion.div>
 
         {status === 'loading' && (
@@ -248,8 +267,8 @@ export default function VerifyCertificate() {
             </motion.div>
             
             <h2 className="text-3xl font-black text-red-500 mb-3 tracking-tighter lowercase">invalid.</h2>
-            <p className="text-xs text-red-400/80 leading-relaxed font-bold tracking-wide uppercase">
-              this hash could not be found on the blockchain. it may be forged.
+            <p className="text-xs text-red-400/80 leading-relaxed font-bold tracking-wide lowercase">
+              {failSubtitle}
             </p>
           </motion.div>
         )}

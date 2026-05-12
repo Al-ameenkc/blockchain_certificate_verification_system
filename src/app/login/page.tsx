@@ -1,16 +1,39 @@
 "use client";
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ShieldAlert, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
   const [authKey, setAuthKey] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (authKey) console.log("Authenticating...");
+    setError('');
+
+    if (!authKey.trim()) {
+      setError('Please enter your admin password.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: authKey }),
+    });
+    const result = await response.json().catch(() => ({}));
+    setIsSubmitting(false);
+
+    if (!response.ok) {
+      setError(result?.error || 'Authentication failed.');
+      return;
+    }
+
     router.push('/dashboard');
   };
 
@@ -54,20 +77,25 @@ export default function LoginPage() {
               <input 
                 type="password" 
                 required
+                value={authKey}
                 className="w-full px-6 py-5 bg-[#020202]/80 border-2 border-white/10 rounded-2xl focus:border-cyan-400 focus:bg-white/5 outline-none transition-all text-white placeholder-gray-700 tracking-[0.4em] shadow-inner text-xl font-black"
                 placeholder="••••••••••••"
                 onChange={(e) => setAuthKey(e.target.value)}
               />
             </div>
+            {error ? (
+              <p className="text-red-400 text-xs font-bold uppercase tracking-[0.15em]">{error}</p>
+            ) : null}
             
             <motion.button 
               whileHover={{ scale: 1.03, y: -5 }}
               whileTap={{ scale: 0.96 }}
               type="submit"
+              disabled={isSubmitting}
               className="group relative w-full py-6 bg-gradient-to-r from-cyan-400 to-blue-500 text-black rounded-2xl font-black text-xl hover:brightness-110 transition-all flex items-center justify-center space-x-3 overflow-hidden shadow-[0_15px_30px_rgba(34,211,238,0.3)] lowercase tracking-tight"
             >
               <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
-              <span>access dashboard.</span>
+              <span>{isSubmitting ? 'authenticating...' : 'access dashboard.'}</span>
               <ArrowRight className="w-6 h-6 text-black group-hover:translate-x-1 transition-transform" strokeWidth={3} />
             </motion.button>
           </form>
@@ -77,6 +105,12 @@ export default function LoginPage() {
               <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(34,211,238,1)]" />
               <span>Node Online</span>
             </p>
+            <Link
+              href="/verify"
+              className="inline-block mt-5 text-[10px] uppercase tracking-[0.2em] font-black text-cyan-400/80 hover:text-white transition-colors"
+            >
+              public certificate verification
+            </Link>
           </div>
         </div>
       </motion.div>

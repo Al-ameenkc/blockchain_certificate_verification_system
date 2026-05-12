@@ -5,8 +5,10 @@ export default function RecordCerts() {
   return (
     <ActivityLogTemplate 
       title="Certificate Records"
-      subtitle="Comprehensive view of all committed files (Issued & Registered) that are not drafts"
-      baseFilter={(a) => !a.action.includes('(Draft)')}
+      subtitle="All issued and registered activity, including drafts and finalized records"
+      baseFilter={(a) =>
+        a.action.startsWith('Issued Certificate') || a.action.startsWith('Registered Certificate')
+      }
       showTypeFilter={false} // Since this only contains saved records, no need for the type filter
     />
   );

@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chapter 3.2 — Design of the Proposed System (Diagrams)</title>
+    <style>
+      :root {
+        --bg: #f7f7fb;
+        --card: #ffffff;
+        --text: #1a1a1f;
+        --muted: #5c5c66;
+        --border: #e3e3ea;
+        --accent: #0f766e;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Times New Roman", Times, serif;
+        font-size: 12pt;
+        line-height: 1.55;
+        color: var(--text);
+        background: var(--bg);
+      }
+      header {
+        padding: 2rem 1.25rem 1rem;
+        max-width: 960px;
+        margin: 0 auto;
+      }
+      header h1 {
+        font-size: 14pt;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        text-align: center;
+        margin: 0 0 0.5rem;
+      }
+      header p {
+        margin: 0;
+        text-align: center;
+        color: var(--muted);
+        font-size: 11pt;
+      }
+      main {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 0 1.25rem 3rem;
+      }
+      section {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1.25rem 1.25rem 1.5rem;
+        margin-bottom: 1.25rem;
+        box-shadow: 0 8px 22px rgba(20, 20, 40, 0.06);
+      }
+      section h2 {
+        font-size: 13pt;
+        margin: 0 0 0.75rem;
+        color: var(--accent);
+      }
+      section h3 {
+        font-size: 12pt;
+        margin: 1rem 0 0.5rem;
+      }
+      p {
+        margin: 0 0 0.75rem;
+        text-align: justify;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 11pt;
+      }
+      .diagram {
+        margin: 1rem 0;
+        overflow-x: auto;
+        border: 1px dashed var(--border);
+        border-radius: 8px;
+        padding: 0.75rem;
+        background: #fafbff;
+      }
+      table.schema {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11pt;
+        margin: 0.75rem 0 0;
+      }
+      table.schema th,
+      table.schema td {
+        border: 1px solid var(--border);
+        padding: 0.45rem 0.55rem;
+        vertical-align: top;
+      }
+      table.schema th {
+        background: #eef7f6;
+        text-align: left;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 10.5pt;
+        background: #f0f0f5;
+        padding: 0.08rem 0.28rem;
+        border-radius: 4px;
+      }
+      ul.norm {
+        margin: 0 0 0.75rem 1.15rem;
+        padding: 0;
+      }
+      ul.norm li {
+        margin-bottom: 0.35rem;
+      }
+      @media print {
+        body {
+          background: #fff;
+        }
+        section {
+          box-shadow: none;
+          page-break-inside: avoid;
+        }
+        .diagram {
+          background: #fff;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Chapter Three — Design Artifacts (HTML Render)</h1>
+      <p>
+        Open in Google Chrome (internet required for the Mermaid CDN). Use Print → Save as PDF if
+        your submission requires embedded figures.
+      </p>
+    </header>
+
+    <main>
+      <section id="s32">
+        <h2>3.2 Design of the Proposed System</h2>
+        <p>
+          This section presents structured design views for the Blockchain-Based Certificate
+          Verification System: a normalized relational data model derived from an entity–relationship
+          view, functional requirements as a use-case model, deployment-oriented architecture,
+          high-level software structure, and representative activity workflows. Diagrams are rendered
+          below using <code>Mermaid</code> so they can be inspected interactively in the browser and
+          exported consistently for the project report.
+        </p>
+      </section>
+
+      <section id="s321">
+        <h2>3.2.1 Data Model (ERD → Relational Schema, 3NF)</h2>
+        <p>
+          The conceptual model separates <strong>reference-keyed certificates</strong>,
+          <strong>audit activities</strong>, and small <strong>lookup</strong> entities so repeating
+          domain values are not duplicated across many rows. The diagram shows cardinalities; the
+          tables that follow translate the ERD into relational schemas.
+        </p>
+        <div class="diagram">
+          <pre class="mermaid">
+erDiagram
+  DEPARTMENTS ||--o{ CERTIFICATES : issued_for
+  DEGREE_CLASSES ||--o{ CERTIFICATES : classified_as
+  CERTIFICATE_ACTION_KINDS ||--o{ CERTIFICATES : record_kind
+  CERTIFICATE_ACTION_KINDS ||--o{ ACTIVITIES : logged_kind
+  DEPARTMENTS {
+    uuid dept_id PK
+    string dept_name
+  }
+  DEGREE_CLASSES {
+    uuid class_id PK
+    string class_name
+  }
+  CERTIFICATE_ACTION_KINDS {
+    string kind_code PK
+    string description
+  }
+  CERTIFICATES {
+    string reference_id PK
+    string student_name
+    string matric_number
+    uuid dept_id FK
+    uuid class_id FK
+    date date_issued
+    string kind_code FK
+    datetime created_at
+  }
+  ACTIVITIES {
+    uuid activity_id PK
+    string kind_code FK
+    string action_title
+    text details
+    string url
+    datetime logged_at
+  }
+          </pre>
+        </div>
+
+        <h3>Relational schemas (logical / physical mapping)</h3>
+        <p>
+          <strong>Third Normal Form (3NF)</strong> is satisfied because: (1) every attribute depends
+          on the whole primary key; (2) non-key attributes do not depend on other non-key attributes
+          (department name is stored only in <code>DEPARTMENTS</code>, honours label only in
+          <code>DEGREE_CLASSES</code>); (3) repeating categorical values for certificate disposition
+          are centralised in <code>CERTIFICATE_ACTION_KINDS</code>. Optional migration note: the
+          implemented prototype may store department and class strings directly on
+          <code>certificates</code> for speed; normalisation here documents the target relational
+          shape for production.
+        </p>
+        <ul class="norm">
+          <li><strong>1NF:</strong> Atomic columns; each certificate row describes one reference.</li>
+          <li><strong>2NF:</strong> No partial dependencies on composite keys (PKs are single-attribute).</li>
+          <li><strong>3NF:</strong> No transitive dependencies (names flow via FK joins, not duplicated facts).</li>
+        </ul>
+
+        <h3>Table specifications</h3>
+        <table class="schema">
+          <thead>
+            <tr>
+              <th>Table</th>
+              <th>Columns (PK/FK noted)</th>
+              <th>Integrity / notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>departments</code></td>
+              <td>
+                <code>dept_id</code> PK (UUID), <code>dept_name</code> UNIQUE NOT NULL
+              </td>
+              <td>Lookup list aligned with institutional faculties/programmes.</td>
+            </tr>
+            <tr>
+              <td><code>degree_classes</code></td>
+              <td><code>class_id</code> PK (UUID), <code>class_name</code> UNIQUE NOT NULL</td>
+              <td>Honours enumerations shared by many certificates.</td>
+            </tr>
+            <tr>
+              <td><code>certificate_action_kinds</code></td>
+              <td><code>kind_code</code> PK (TEXT), <code>description</code> NOT NULL</td>
+              <td>
+                Rows such as <code>ISSUE</code>, <code>REGISTER</code>; replaces duplicated free-text
+                semantics at scale.
+              </td>
+            </tr>
+            <tr>
+              <td><code>certificates</code></td>
+              <td>
+                <code>reference_id</code> PK; <code>student_name</code>, <code>matric_number</code>;
+                <code>dept_id</code> FK→<code>departments</code>;
+                <code>class_id</code> FK→<code>degree_classes</code>; <code>date_issued</code>;
+                <code>kind_code</code> FK→<code>certificate_action_kinds</code>; <code>created_at</code>
+              </td>
+              <td>
+                Mirrors anchored on-chain facts for dashboards; uniqueness on
+                <code>reference_id</code> matches contract-level uniqueness intent.
+              </td>
+            </tr>
+            <tr>
+              <td><code>activities</code></td>
+              <td>
+                <code>activity_id</code> PK; <code>kind_code</code> FK nullable;
+                <code>action_title</code>; <code>details</code>; <code>url</code>;
+                <code>logged_at</code> TIMESTAMPTZ NOT NULL
+              </td>
+              <td>
+                Audit-style event stream; <code>kind_code</code> links structured logs to the same
+                vocabulary as certificates where applicable.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p class="muted">
+          On-chain storage is modelled separately: the smart contract maps <code>reference_id</code>→
+          structured certificate fields. It is not a SQL table, but it participates in the overall
+          distributed data model as the tamper-evident system of record for verification reads.
+        </p>
+      </section>
+
+      <section id="s322">
+        <h2>3.2.2 Functional Requirements (Use Case Diagram)</h2>
+        <p>
+          Primary actors are the <strong>Administrator</strong> (authenticated issuer) and the
+          <strong>Public Verifier</strong>. The <strong>Blockchain Network</strong> acts as a supporting
+          subsystem for anchoring and tamper-evident reads; <strong>Supabase</strong> supports optional
+          mirrored persistence and audit listings.
+        </p>
+        <div class="diagram">
+          <pre class="mermaid">
+flowchart TB
+  subgraph Actors["Actors"]
+    ADM((Administrator))
+    PV((Public Verifier))
+  end
+
+  subgraph Supporting["Supporting systems"]
+    BC[(Blockchain Network\nSepolia / EVM)]
+    DB[(Supabase PostgreSQL)]
+    WAL[(Wallet Provider\nMetaMask etc.)]
+  end
+
+  UC_AUTH[[Authenticate]]
+  UC_PREP[[Prepare certificate details]]
+  UC_REF[[Generate unique reference]]
+  UC_PREVIEW[[Preview certificate view]]
+  UC_DRAFT[[Save draft / log draft activity]]
+  UC_SUBMIT[[Submit credential on-chain]]
+  UC_MIRROR[[Mirror rows / sync activity log]]
+  UC_VERIFY[[Verify credential by reference]]
+  UC_LIST[[Review issuance / registration logs]]
+
+  ADM --> UC_AUTH
+  ADM --> UC_PREP
+  ADM --> UC_REF
+  ADM --> UC_PREVIEW
+  ADM --> UC_DRAFT
+  ADM --> UC_SUBMIT
+  ADM --> UC_MIRROR
+  ADM --> UC_LIST
+
+  PV --> UC_VERIFY
+
+  UC_SUBMIT -. uses .-> WAL
+  UC_SUBMIT -. writes .-> BC
+  UC_VERIFY -. reads .-> BC
+
+  UC_MIRROR -. writes .-> DB
+  UC_LIST -. reads .-> DB
+  UC_DRAFT -. writes .-> DB
+          </pre>
+        </div>
+        <p class="muted">
+          Include this diagram as <strong>Figure 3.x — Use Case Overview</strong>. Extend with «include»
+          relationships if your supervisor expects strict UML oval notation on paper; this browser view
+          emphasises readability.
+        </p>
+      </section>
+
+      <section id="s323">
+        <h2>3.2.3 System / Network Architecture (Deployment Diagram)</h2>
+        <p>
+          Deployment reflects a typical student prototype topology: browser-hosted wallet signing,
+          publicly routed RPC access to a test network, managed PostgreSQL via Supabase, and Next.js
+          hosting either locally during development or on a cloud edge platform in production.
+        </p>
+        <div class="diagram">
+          <pre class="mermaid">
+flowchart TB
+  subgraph UserDevice["End-user device"]
+    BR[Google Chrome]
+    EXT[Wallet extension]
+    BR --- EXT
+  end
+
+  subgraph Hosting["Application hosting"]
+    NX[Next.js app\nApp Router + Middleware]
+    API[Route handlers\n/auth login API]
+    NX --- API
+  end
+
+  subgraph ChainInfra["Blockchain infrastructure"]
+    RPC[JSON-RPC providers\nprimary + fallbacks]
+    SEP[Sepolia validators / blocks]
+    RPC --- SEP
+    SC[[CertificateRegistry.sol]]
+    SC -. deployed .- SEP
+  end
+
+  subgraph DataCloud["Managed data services"]
+    SB[(Supabase\nPostgreSQL + REST)]
+  end
+
+  BR <-- HTTPS --> NX
+  EXT <-- signed txs --> RPC
+  BR <-- reads --> RPC
+  NX <-- server env secrets --> API
+  NX <-- HTTPS --> SB
+          </pre>
+        </div>
+        <p class="muted">
+          Label production deployments explicitly in your narrative (for example “Vercel / institutional
+          VPS”) if that differs from localhost development.
+        </p>
+      </section>
+
+      <section id="s324">
+        <h2>3.2.4 Software Structure (Class Diagram)</h2>
+        <p>
+          The diagram abstracts the Solidity registry, the verification utility, and representative UI
+          orchestration. It is intentionally lighter than a full reverse-engineered UML export so it
+          remains readable in a project report.
+        </p>
+        <div class="diagram">
+          <pre class="mermaid">
+classDiagram
+  direction TB
+  class CertificateRegistry {
+    +String owner
+    +issueCertificate(ref)
+    +verifyCertificate(ref)
+  }
+  class OnChainCertificate {
+    +String name
+    +String matricNumber
+    +String department
+    +String honoursClass
+    +String awardDate
+    +String isRegistered
+    +String issuer
+  }
+  class ReadCertificateModule {
+    +readCertificateOnChain(ref)
+    +getContractAddress(cfg)
+    +getPrimaryRpcUrl(cfg)
+  }
+  class CertificatePage {
+    +handleSubmitToBlockchain(ctx)
+    +handleSaveDraft(ctx)
+    +handlePrint(ctx)
+  }
+  class VerifyCertificatePage {
+    +fetchCertificate(ref)
+  }
+  class EthersContract {
+    &lt;&lt;ethers&gt;&gt;
+    +lookupByReference(ref)
+  }
+  class Middleware {
+    &lt;&lt;route&gt;&gt;
+    +matcher(pattern)
+  }
+  class SupabaseClient {
+    &lt;&lt;module&gt;&gt;
+    +fromTable(name)
+  }
+  class LogActivity {
+    &lt;&lt;module&gt;&gt;
+    +insert(entry)
+  }
+  CertificateRegistry --> OnChainCertificate : stores
+  ReadCertificateModule --> EthersContract : uses
+  VerifyCertificatePage --> ReadCertificateModule : calls
+  CertificatePage --> EthersContract : walletTx
+  CertificatePage ..> CertificateRegistry : submitsTx
+  CertificatePage ..> SupabaseClient : persist mirror
+  CertificatePage ..> LogActivity : audit events
+  Middleware --> CertificatePage : session gate
+          </pre>
+        </div>
+        <p class="muted">
+          <code>middleware</code>, <code>supabaseClient</code>, and <code>logActivity</code> are shown
+          as <strong>Middleware</strong>, <strong>SupabaseClient</strong>, and <strong>LogActivity</strong>
+          with dependencies from the certificate issuance flow.
+        </p>
+      </section>
+
+      <section id="s325">
+        <h2>3.2.5 Workflow of Use Cases (Activity Diagram)</h2>
+        <p>
+          Two representative workflows are shown: <strong>Administrator issuance / anchoring</strong> and
+          <strong>Public verification</strong>. They align with the implemented routes under the dashboard,
+          certificate preview, and verifier screens.
+        </p>
+
+        <h3>(A) Administrator — issue / anchor certificate</h3>
+        <div class="diagram">
+          <pre class="mermaid">
+flowchart TD
+  A([Start]) --> B["Open dashboard, login if needed"]
+  B --> C["Complete graduate fields: department, honours, issue date"]
+  C --> D{"Generate unique reference - DB uniqueness check"}
+  D -->|collision| C
+  D -->|unique| E["Open certificate preview route"]
+  E --> F{Save draft?}
+  F -->|yes| G["Append activity log entry"]
+  G --> E
+  F -->|continue| H{Submit to blockchain?}
+  H -->|no| E
+  H -->|yes| I{"Wallet installed and on Sepolia?"}
+  I -->|no| J["Show wallet or network error"]
+  J --> E
+  I -->|yes| K["Sign issueCertificate transaction"]
+  K --> L{Transaction confirmed?}
+  L -->|rejected| M["Show failure or cancelled"]
+  M --> E
+  L -->|success| N["Insert mirror row into certificates table"]
+  N --> O["Log successful activity"]
+  O --> P([End anchored])
+          </pre>
+        </div>
+
+        <h3>(B) Public verifier — verify by reference</h3>
+        <div class="diagram">
+          <pre class="mermaid">
+flowchart TD
+  X([Start]) --> Y["Open verify page"]
+  Y --> Z["Enter certificate reference"]
+  Z --> AA["Normalize reference string"]
+  AA --> AB["Read mapping via JSON-RPC"]
+  AB --> AC{"Credential registered on chain?"}
+  AC -->|yes| AD["Show verified fields to user"]
+  AC -->|no| AE["Show not found or invalid"]
+  AD --> AF([End])
+  AE --> AF
+          </pre>
+        </div>
+      </section>
+    </main>
+
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10.9.5/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "neutral",
+        securityLevel: "loose",
+        flowchart: { curve: "basis", padding: 10 },
+      });
+    </script>
+  </body>
+</html>

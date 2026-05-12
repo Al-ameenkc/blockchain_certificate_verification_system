@@ -1,20 +1,25 @@
 "use client";
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Home, LayoutList, Award, ScrollText, Settings, LogOut } from 'lucide-react';
+import { Home, LayoutList, Award, ScrollText, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
 
   const menuItems = [
     { name: 'Home', href: '/dashboard', icon: Home },
     { name: 'Records', href: '/dashboard/record', icon: LayoutList },
     { name: 'Issued', href: '/dashboard/issued', icon: Award },
     { name: 'Registered', href: '/dashboard/registered', icon: ScrollText },
-    { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/login');
+  };
 
   return (
     <aside className="w-72 bg-[#020202]/60 backdrop-blur-3xl border-r border-white/5 flex flex-col p-6 z-50">
@@ -65,13 +70,14 @@ export default function Sidebar() {
       </nav>
 
       <div className="pt-6 border-t border-white/5 mt-auto">
-        <Link
-          href="/login"
+        <button
+          type="button"
+          onClick={handleLogout}
           className="group flex items-center justify-center space-x-3 px-4 py-4 rounded-2xl text-xs font-black text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all uppercase tracking-[0.2em]"
         >
           <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span>Logout</span>
-        </Link>
+        </button>
       </div>
     </aside>
   );

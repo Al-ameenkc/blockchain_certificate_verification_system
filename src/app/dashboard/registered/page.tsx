@@ -6,7 +6,7 @@ export default function RegisteredCerts() {
     <ActivityLogTemplate 
       title="Registered Certificates"
       subtitle="Audit log of legacy records committed to the ledger"
-      baseFilter={(a) => a.action.includes('Registered')}
+      baseFilter={(a) => a.action.startsWith('Registered Certificate') && !a.action.includes('(Draft)')}
     />
   );
 }

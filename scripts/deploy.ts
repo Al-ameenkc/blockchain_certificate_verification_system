@@ -19,7 +19,7 @@ async function main() {
   console.log("==================================================");
   console.log("");
   console.log("ACTION REQUIRED:");
-  console.log("Copy the Contract Address above and paste it into your Node Settings page at /dashboard/settings");
+  console.log("Copy the Contract Address above into .env.local as NEXT_PUBLIC_CONTRACT_ADDRESS (and redeploy the app if needed).");
 }
 
 main().catch((error) => {
